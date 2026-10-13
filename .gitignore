@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Large model files (too big for GitHub)
+models/all_pipelines.joblib
+
+# Data (raw data excluded, processed included)
+data/raw/
+
+# OS
+.DS_Store
+Thumbs.db

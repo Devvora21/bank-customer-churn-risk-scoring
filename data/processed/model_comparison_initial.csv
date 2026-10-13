@@ -1,0 +1,6 @@
+Model,Test_ROC_AUC,CV_ROC_AUC,Test_F1
+XGBoost,0.869,0.8649,0.6061
+Gradient Boosting,0.8683,0.86,0.6322
+Random Forest,0.8628,0.8564,0.6144
+Decision Tree,0.8307,0.8303,0.5755
+Logistic Regression,0.773,0.7638,0.5034

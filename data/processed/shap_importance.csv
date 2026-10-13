@@ -1,0 +1,16 @@
+Feature,Mean_Abs_SHAP
+Age,0.7292393
+NumOfProducts,0.6259351
+Active_Products,0.40558338
+Geography_Germany,0.2458932
+Gender_Male,0.21928953
+Tenure_Age_Ratio,0.12518609
+Balance,0.11436642
+Balance_to_Salary,0.09668983
+EstimatedSalary,0.07696412
+CreditScore,0.06915456
+Products_per_Tenure,0.06556606
+Age_Tenure_Interaction,0.05616084
+Zero_Balance_Flag,0.04838704
+Geography_Spain,0.019112313
+Tenure,0.01029648

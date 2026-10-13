@@ -1,0 +1,27 @@
+{
+  "best_model": "XGBoost",
+  "numeric_features": [
+    "CreditScore",
+    "Age",
+    "Tenure",
+    "Balance",
+    "NumOfProducts",
+    "EstimatedSalary",
+    "Balance_to_Salary",
+    "Products_per_Tenure",
+    "Active_Products",
+    "Age_Tenure_Interaction",
+    "Tenure_Age_Ratio",
+    "Zero_Balance_Flag"
+  ],
+  "categorical_features": [
+    "Geography",
+    "Gender"
+  ],
+  "random_state": 42,
+  "train_size": 8000,
+  "test_size": 2000,
+  "train_churn_rate": 0.20375,
+  "test_churn_rate": 0.2035,
+  "optimal_threshold": 0.11834170854271357
+}
