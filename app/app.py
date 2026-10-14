@@ -450,6 +450,32 @@ html, body, [class*="css"], [data-testid="stAppViewContainer"] {{
     color: var(--on-surface);
 }}
 
+/* Universal Typography & Label Visibility Overrides */
+label, 
+[data-testid="stWidgetLabel"] p, 
+[data-testid="stWidgetLabel"] span,
+div[data-testid="stWidgetLabel"] *,
+.stSlider label,
+.stSelectbox label,
+.stNumberInput label,
+.stTextInput label,
+.stMultiSelect label,
+.stRadio label {
+    color: var(--on-surface) !important;
+    font-weight: 600 !important;
+    font-size: 0.88rem !important;
+    opacity: 1 !important;
+}
+
+/* Slider values & labels */
+[data-testid="stSliderTickBarMin"],
+[data-testid="stSliderTickBarMax"],
+[data-testid="stSlider"] div,
+[data-testid="stSlider"] span {
+    color: var(--on-surface) !important;
+    font-weight: 600 !important;
+}
+
 /* Form inputs & component styling */
 div[data-testid="stForm"] {{
     background: var(--surface-lowest) !important;
@@ -461,25 +487,71 @@ div[data-testid="stForm"] {{
 div[data-baseweb="input"], div[data-baseweb="select"] > div {{
     background-color: var(--surface-low) !important;
     border-color: var(--outline-variant) !important;
-    color: var(--on-surface) !important;
     border-radius: 8px !important;
 }}
 
-.stButton > button, .stFormSubmitButton > button {{
+input, select, textarea, div[data-baseweb="select"] span {{
+    color: var(--on-surface) !important;
+    font-weight: 600 !important;
+}}
+
+/* Metrics styling - remove blue highlight background, keep clean precision styling */
+div[data-testid="stMetric"] {{
+    background: var(--surface-lowest) !important;
+    border: 1px solid var(--outline-variant) !important;
+    border-radius: 10px !important;
+    padding: 0.95rem 1.1rem !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02) !important;
+}}
+
+div[data-testid="stMetric"] [data-testid="stMetricLabel"],
+div[data-testid="stMetric"] [data-testid="stMetricLabel"] * {{
+    color: var(--on-surface-variant) !important;
+    font-weight: 600 !important;
+    font-size: 0.8rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
+    background: transparent !important;
+}}
+
+div[data-testid="stMetric"] [data-testid="stMetricValue"],
+div[data-testid="stMetric"] [data-testid="stMetricValue"] * {{
+    color: var(--on-surface) !important;
+    font-weight: 700 !important;
+    font-size: 1.7rem !important;
+    font-feature-settings: "tnum" 1 !important;
+    background: transparent !important;
+}}
+
+/* Primary & Secondary Buttons styling */
+.stButton > button, .stFormSubmitButton > button, .stDownloadButton > button {{
     border-radius: 8px !important;
     font-weight: 600 !important;
     min-height: 2.7rem !important;
-    transition: all 0.15s ease-in-out;
+    transition: all 0.15s ease-in-out !important;
 }}
 
 .stButton > button[kind="primary"], .stFormSubmitButton > button[kind="primary"] {{
     background-color: var(--primary) !important;
     border-color: var(--primary) !important;
-    color: var(--on-primary) !important;
+    color: #FFFFFF !important;
 }}
 
 .stButton > button[kind="primary"]:hover, .stFormSubmitButton > button[kind="primary"]:hover {{
     background-color: var(--primary-container) !important;
+    transform: translateY(-1px);
+}}
+
+.stDownloadButton > button {{
+    background-color: var(--primary) !important;
+    border: 1px solid var(--primary) !important;
+    color: #FFFFFF !important;
+    font-weight: 600 !important;
+}}
+
+.stDownloadButton > button:hover {{
+    background-color: var(--primary-container) !important;
+    color: #FFFFFF !important;
     transform: translateY(-1px);
 }}
 
@@ -885,21 +957,21 @@ elif nav_selection == "Risk Calculator":
             st.markdown("<div style='height:0.8rem;'></div>", unsafe_allow_html=True)
             submitted = st.form_submit_button("⚡ Calculate Churn Risk Propensity", use_container_width=True, type="primary")
 
-    if submitted:
-        with st.spinner("Running calibrated inference & SHAP kernel..."):
-            customer_df = prepare_customer_input(
-                credit_score, geography, gender, age, tenure,
-                balance, num_products, has_cr_card, is_active, estimated_salary,
-            )
-            result = predict_single(customer_df, pipeline, threshold)
-            st.session_state["last_result"] = result
-            st.session_state["last_customer_df"] = customer_df
-            st.session_state["last_inputs"] = {
-                "credit_score": credit_score, "geography": geography, "gender": gender,
-                "age": age, "tenure": tenure, "balance": balance,
-                "num_products": num_products, "has_cr_card": has_cr_card,
-                "is_active": is_active, "salary": estimated_salary,
-            }
+    # If user submitted or first time landing on calculator, compute prediction so right panel is full and informative
+    if submitted or st.session_state.get("last_result") is None:
+        customer_df = prepare_customer_input(
+            credit_score, geography, gender, age, tenure,
+            balance, num_products, has_cr_card, is_active, estimated_salary,
+        )
+        result = predict_single(customer_df, pipeline, threshold)
+        st.session_state["last_result"] = result
+        st.session_state["last_customer_df"] = customer_df
+        st.session_state["last_inputs"] = {
+            "credit_score": credit_score, "geography": geography, "gender": gender,
+            "age": age, "tenure": tenure, "balance": balance,
+            "num_products": num_products, "has_cr_card": has_cr_card,
+            "is_active": is_active, "salary": estimated_salary,
+        }
 
     with calc_right:
         if st.session_state.get("last_result") is not None:
