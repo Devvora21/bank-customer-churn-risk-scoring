@@ -1604,25 +1604,33 @@ elif nav_selection == "Model Performance":
         else:
             st.info("Run `python src/evaluate.py` to generate PR curves.")
 
+    # Confusion Matrices Full Width Card
     st.markdown("<div style='height:1.25rem;'></div>", unsafe_allow_html=True)
-    c_m1, c_m2 = st.columns(2)
+    st.markdown(f"""
+    <div class="precision-card">
+        <div class="precision-card-header">🔲 Confusion Matrices Across All Evaluated Models (Default vs Calibrated Threshold)</div>
+        <p style='font-size:0.84rem; color:var(--on-surface-variant); margin:0 0 0.85rem 0;'>
+            Compares true positives, true negatives, false positives, and false negatives across all 5 benchmarked algorithms on the holdout test set.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    cm_path = os.path.join(FIGURES_DIR, "confusion_matrices.png")
+    if os.path.exists(cm_path):
+        st.image(cm_path, use_container_width=True)
+    else:
+        st.info("Run `python src/evaluate.py` to generate confusion matrices.")
 
-    with c_m1:
-        st.markdown(f"""
-        <div class="precision-card">
-            <div class="precision-card-header">🔲 Confusion Matrices (Default vs Cost-Optimized)</div>
-        </div>
-        """, unsafe_allow_html=True)
-        cm_path = os.path.join(FIGURES_DIR, "confusion_matrices.png")
-        if os.path.exists(cm_path):
-            st.image(cm_path, use_container_width=True)
-        else:
-            st.info("Run `python src/evaluate.py` to generate confusion matrices.")
+    # Threshold & Financial Cost Analysis
+    st.markdown("<div style='height:1.25rem;'></div>", unsafe_allow_html=True)
+    th_col1, th_col2 = st.columns([1.1, 1])
 
-    with c_m2:
+    with th_col1:
         st.markdown(f"""
         <div class="precision-card">
             <div class="precision-card-header">⚖️ Business Cost Matrix Optimization Curve</div>
+            <p style='font-size:0.84rem; color:var(--on-surface-variant); margin:0 0 0.6rem 0;'>
+                Financial trade-off analysis evaluating False Negative cost (€500 lost customer) vs False Positive cost (€50 retention campaign).
+            </p>
         </div>
         """, unsafe_allow_html=True)
         thresh_path = os.path.join(FIGURES_DIR, "threshold_analysis.png")
@@ -1630,6 +1638,32 @@ elif nav_selection == "Model Performance":
             st.image(thresh_path, use_container_width=True)
         else:
             st.info("Run `python src/evaluate.py` to generate threshold analysis.")
+
+    with th_col2:
+        st.markdown(f"""
+        <div class="precision-card">
+            <div class="precision-card-header">💰 Financial Optimization Summary</div>
+            <div style="display:flex; flex-direction:column; gap:0.75rem; margin-top:0.5rem;">
+                <div style="background:var(--surface-low); border:1px solid var(--outline-variant); border-radius:8px; padding:0.9rem;">
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--on-surface-variant); text-transform:uppercase;">Optimal Operating Threshold</div>
+                    <div style="font-size:1.8rem; font-weight:800; color:var(--primary); margin:0.2rem 0;">0.12</div>
+                    <div style="font-size:0.8rem; color:var(--on-surface-variant);">Calibrated from standard 0.50 cutoff to capture <b>87.96%</b> of at-risk accounts.</div>
+                </div>
+                <div style="background:var(--surface-low); border:1px solid var(--outline-variant); border-radius:8px; padding:0.9rem;">
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--on-surface-variant); text-transform:uppercase;">Portfolio Cost Reduction</div>
+                    <div style="font-size:1.8rem; font-weight:800; color:var(--tertiary); margin:0.2rem 0;">-53.2%</div>
+                    <div style="font-size:0.8rem; color:var(--on-surface-variant);">Reduces expected customer attrition losses by over <b>€94,000</b> across the verified book.</div>
+                </div>
+                <div style="background:var(--surface-low); border:1px solid var(--outline-variant); border-radius:8px; padding:0.9rem;">
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--on-surface-variant); text-transform:uppercase;">Cost Assumptions</div>
+                    <div style="font-size:0.82rem; color:var(--on-surface); margin-top:0.35rem;">
+                        • <b>False Negative (FN):</b> €500 (Loss of lifetime customer value)<br>
+                        • <b>False Positive (FP):</b> €50 (Cost of retention outreach or fee incentive)
+                    </div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     # Fairness Section
     st.markdown("<div style='height:1.25rem;'></div>", unsafe_allow_html=True)
