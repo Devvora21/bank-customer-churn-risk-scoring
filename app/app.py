@@ -451,40 +451,40 @@ html, body, [class*="css"], [data-testid="stAppViewContainer"] {{
 }}
 
 /* Form inputs & component styling */
-div[data-testid="stForm"] {
+div[data-testid="stForm"] {{
     background: var(--surface-lowest) !important;
     border: 1px solid var(--outline-variant) !important;
     border-radius: 12px !important;
     padding: 1.5rem !important;
-}
+}}
 
-div[data-baseweb="input"], div[data-baseweb="select"] > div {
+div[data-baseweb="input"], div[data-baseweb="select"] > div {{
     background-color: var(--surface-low) !important;
     border-color: var(--outline-variant) !important;
     color: var(--on-surface) !important;
     border-radius: 8px !important;
-}
+}}
 
-.stButton > button, .stFormSubmitButton > button {
+.stButton > button, .stFormSubmitButton > button {{
     border-radius: 8px !important;
     font-weight: 600 !important;
     min-height: 2.7rem !important;
     transition: all 0.15s ease-in-out;
-}
+}}
 
-.stButton > button[kind="primary"], .stFormSubmitButton > button[kind="primary"] {
+.stButton > button[kind="primary"], .stFormSubmitButton > button[kind="primary"] {{
     background-color: var(--primary) !important;
     border-color: var(--primary) !important;
     color: var(--on-primary) !important;
-}
+}}
 
-.stButton > button[kind="primary"]:hover, .stFormSubmitButton > button[kind="primary"]:hover {
+.stButton > button[kind="primary"]:hover, .stFormSubmitButton > button[kind="primary"]:hover {{
     background-color: var(--primary-container) !important;
     transform: translateY(-1px);
-}
+}}
 
 /* Sidebar Radio Navigation Pill styling - High Contrast & Crisp */
-[data-testid="stSidebar"] [data-testid="stRadio"] label {
+[data-testid="stSidebar"] [data-testid="stRadio"] label {{
     background-color: var(--surface-lowest) !important;
     border: 1px solid var(--outline-variant) !important;
     border-radius: 8px !important;
@@ -492,32 +492,32 @@ div[data-baseweb="input"], div[data-baseweb="select"] > div {
     margin-bottom: 0.35rem !important;
     transition: all 0.15s ease !important;
     cursor: pointer !important;
-}
+}}
 
 [data-testid="stSidebar"] [data-testid="stRadio"] label p,
 [data-testid="stSidebar"] [data-testid="stRadio"] label span,
-[data-testid="stSidebar"] [data-testid="stRadio"] label div {
+[data-testid="stSidebar"] [data-testid="stRadio"] label div {{
     color: var(--on-surface) !important;
     font-weight: 600 !important;
     font-size: 0.88rem !important;
     opacity: 1 !important;
-}
+}}
 
-[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
+[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {{
     border-color: var(--primary) !important;
     background-color: var(--surface-high) !important;
-}
+}}
 
 [data-testid="stSidebar"] [data-testid="stRadio"] label[data-checked="true"],
-[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
+[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {{
     border-color: var(--primary) !important;
     background-color: var(--surface-container) !important;
-}
+}}
 
-[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) p {
+[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) p {{
     color: var(--primary) !important;
     font-weight: 700 !important;
-}
+}}
 </style>
 """
 st.markdown(css_rules, unsafe_allow_html=True)
