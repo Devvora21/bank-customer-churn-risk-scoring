@@ -460,21 +460,21 @@ div[data-testid="stWidgetLabel"] *,
 .stNumberInput label,
 .stTextInput label,
 .stMultiSelect label,
-.stRadio label {
+.stRadio label {{
     color: var(--on-surface) !important;
     font-weight: 600 !important;
     font-size: 0.88rem !important;
     opacity: 1 !important;
-}
+}}
 
 /* Slider values & labels */
 [data-testid="stSliderTickBarMin"],
 [data-testid="stSliderTickBarMax"],
 [data-testid="stSlider"] div,
-[data-testid="stSlider"] span {
+[data-testid="stSlider"] span {{
     color: var(--on-surface) !important;
     font-weight: 600 !important;
-}
+}}
 
 /* Form inputs & component styling */
 div[data-testid="stForm"] {{
