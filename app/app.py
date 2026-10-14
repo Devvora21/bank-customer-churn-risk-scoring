@@ -1667,7 +1667,14 @@ elif nav_selection == "Model Performance":
 
     # Fairness Section
     st.markdown("<div style='height:1.25rem;'></div>", unsafe_allow_html=True)
-    st.markdown('<div class="precision-card-header">⚖️ Subgroup Fairness Audit (Demographic Parity)</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="precision-card">
+        <div class="precision-card-header">⚖️ Demographic Subgroup Fairness Audit (Demographic Parity)</div>
+        <p style='font-size:0.84rem; color:var(--on-surface-variant); margin:0 0 0.85rem 0;'>
+            Empirical evaluation of true positive rates, false positive rates, and selection parity across Geography and Gender subgroups.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
     fair_path = os.path.join(FIGURES_DIR, "fairness_check.png")
     if os.path.exists(fair_path):
@@ -1683,7 +1690,7 @@ elif nav_selection == "Model Performance":
             use_container_width=True,
         )
         st.markdown(f"""
-        <div class="callout-info" style="border-left:4px solid var(--med-risk-fg);">
+        <div class="callout-info" style="border-left:4px solid var(--med-risk-fg); margin-top:0.75rem;">
             <b>Regulatory Compliance Mandate (ECB SREP & EBA Guidelines):</b> Demographic attributes (Territory & Gender) are validated to ensure no systemic exclusionary bias. The pipeline runs across behavioural vectors. Quarterly monitoring reports are retained for risk compliance.
         </div>
         """, unsafe_allow_html=True)
@@ -1693,9 +1700,8 @@ elif nav_selection == "Model Performance":
 # Global Footer
 # ──────────────────────────────────────────────
 
-st.markdown("<div style='height:2.5rem;'></div>", unsafe_allow_html=True)
 st.markdown(f"""
-<div style='text-align:center; color:var(--on-surface-variant); font-size:0.8rem; padding:1.25rem 0; border-top:1px solid var(--outline-variant);'>
+<div style='text-align:center; color:var(--on-surface-variant); font-size:0.8rem; padding:1.2rem 0 0.5rem 0; margin-top:1.5rem; border-top:1px solid var(--outline-variant);'>
     <b>ChurnIQ Enterprise Risk Suite</b> &nbsp;•&nbsp; Precision Intelligence Architecture &nbsp;•&nbsp;
     Inference Engine: {best_model_name} (Threshold: {threshold:.2f}) &nbsp;•&nbsp; Powered by XGBoost, Scikit-Learn & SHAP
 </div>
