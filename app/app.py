@@ -451,52 +451,73 @@ html, body, [class*="css"], [data-testid="stAppViewContainer"] {{
 }}
 
 /* Form inputs & component styling */
-div[data-testid="stForm"] {{
+div[data-testid="stForm"] {
     background: var(--surface-lowest) !important;
     border: 1px solid var(--outline-variant) !important;
     border-radius: 12px !important;
     padding: 1.5rem !important;
-}}
+}
 
-div[data-baseweb="input"], div[data-baseweb="select"] > div {{
+div[data-baseweb="input"], div[data-baseweb="select"] > div {
     background-color: var(--surface-low) !important;
     border-color: var(--outline-variant) !important;
     color: var(--on-surface) !important;
     border-radius: 8px !important;
-}}
+}
 
-.stButton > button, .stFormSubmitButton > button {{
+.stButton > button, .stFormSubmitButton > button {
     border-radius: 8px !important;
     font-weight: 600 !important;
     min-height: 2.7rem !important;
     transition: all 0.15s ease-in-out;
-}}
+}
 
-.stButton > button[kind="primary"], .stFormSubmitButton > button[kind="primary"] {{
+.stButton > button[kind="primary"], .stFormSubmitButton > button[kind="primary"] {
     background-color: var(--primary) !important;
     border-color: var(--primary) !important;
     color: var(--on-primary) !important;
-}}
+}
 
-.stButton > button[kind="primary"]:hover, .stFormSubmitButton > button[kind="primary"]:hover {{
+.stButton > button[kind="primary"]:hover, .stFormSubmitButton > button[kind="primary"]:hover {
     background-color: var(--primary-container) !important;
     transform: translateY(-1px);
-}}
+}
 
-/* Sidebar Radio Navigation Pill styling */
-[data-testid="stSidebar"] [data-testid="stRadio"] label {{
-    background-color: var(--surface-lowest);
-    border: 1px solid var(--outline-variant);
-    border-radius: 8px;
-    padding: 0.6rem 0.85rem;
-    margin-bottom: 0.3rem;
-    transition: all 0.15s ease;
-}}
+/* Sidebar Radio Navigation Pill styling - High Contrast & Crisp */
+[data-testid="stSidebar"] [data-testid="stRadio"] label {
+    background-color: var(--surface-lowest) !important;
+    border: 1px solid var(--outline-variant) !important;
+    border-radius: 8px !important;
+    padding: 0.65rem 0.95rem !important;
+    margin-bottom: 0.35rem !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+}
 
-[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {{
-    border-color: var(--primary);
-    background-color: var(--surface-high);
-}}
+[data-testid="stSidebar"] [data-testid="stRadio"] label p,
+[data-testid="stSidebar"] [data-testid="stRadio"] label span,
+[data-testid="stSidebar"] [data-testid="stRadio"] label div {
+    color: var(--on-surface) !important;
+    font-weight: 600 !important;
+    font-size: 0.88rem !important;
+    opacity: 1 !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
+    border-color: var(--primary) !important;
+    background-color: var(--surface-high) !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label[data-checked="true"],
+[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
+    border-color: var(--primary) !important;
+    background-color: var(--surface-container) !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) p {
+    color: var(--primary) !important;
+    font-weight: 700 !important;
+}
 </style>
 """
 st.markdown(css_rules, unsafe_allow_html=True)
@@ -780,8 +801,9 @@ if nav_selection == "Overview":
             </div>
             """, unsafe_allow_html=True)
 
+            cust_col = "CustomerId" if "CustomerId" in scored_data.columns else scored_data.columns[0]
             geo_summary = scored_data.groupby("Geography").agg(
-                Customers=("CustomerId", "count"),
+                Customers=(cust_col, "count"),
                 HighRisk=("Risk_Tier", lambda x: (x == "High").sum()),
                 MeanProb=("Churn_Probability", "mean")
             ).reset_index()
@@ -1056,10 +1078,14 @@ elif nav_selection == "Portfolio Explorer":
             filtered_df = filtered_df[filtered_df["IsActiveMember"] == 0]
         if search_query.strip():
             q = search_query.strip().lower()
-            filtered_df = filtered_df[
-                filtered_df["CustomerId"].astype(str).str.contains(q) |
-                filtered_df["Surname"].astype(str).str.lower().str.contains(q)
-            ]
+            cond = pd.Series([False] * len(filtered_df), index=filtered_df.index)
+            if "CustomerId" in filtered_df.columns:
+                cond = cond | filtered_df["CustomerId"].astype(str).str.contains(q)
+            if "Surname" in filtered_df.columns:
+                cond = cond | filtered_df["Surname"].astype(str).str.lower().str.contains(q)
+            if not cond.any() and "CustomerId" not in filtered_df.columns and "Surname" not in filtered_df.columns:
+                cond = filtered_df["Geography"].astype(str).str.lower().str.contains(q)
+            filtered_df = filtered_df[cond]
 
         st.markdown(f"""
         <div style="display:flex; justify-content:space-between; align-items:center; margin: 0.5rem 0 1rem 0;">
