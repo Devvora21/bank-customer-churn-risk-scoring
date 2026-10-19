@@ -86,9 +86,12 @@ DESIGN_SYSTEM = {
         "surface": "#f8fafc",
         "surface_dim": "#e2e8f0",
         "surface_bright": "#ffffff",
+        "surface_lowest": "#ffffff",
         "surface_container_lowest": "#ffffff",
+        "surface_low": "#f1f5f9",
         "surface_container_low": "#f1f5f9",
         "surface_container": "#e2e8f0",
+        "surface_high": "#cbd5e1",
         "surface_container_high": "#cbd5e1",
         "surface_container_highest": "#94a3b8",
         "on_surface": "#0f172a",               # Deep Slate Navy - Maximum readability & contrast
@@ -126,9 +129,12 @@ DESIGN_SYSTEM = {
         "surface": "#0b0f19",
         "surface_dim": "#070a10",
         "surface_bright": "#161f30",
+        "surface_lowest": "#111827",
         "surface_container_lowest": "#111827",
+        "surface_low": "#151e32",
         "surface_container_low": "#151e32",
         "surface_container": "#1e293b",
+        "surface_high": "#283548",
         "surface_container_high": "#283548",
         "surface_container_highest": "#334155",
         "on_surface": "#f8fafc",
@@ -269,7 +275,7 @@ css_rules = f"""
     /* Native Streamlit and BaseWeb CSS theme variable sync */
     --text-color: {TOKENS["on_surface"]} !important;
     --background-color: {TOKENS["surface"]} !important;
-    --secondary-background-color: {TOKENS["surface_low"]} !important;
+    --secondary-background-color: {TOKENS["surface_container_low"]} !important;
     --primary-color: {TOKENS["primary"]} !important;
 }}
 
