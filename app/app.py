@@ -265,10 +265,17 @@ css_rules = f"""
     --high-risk-fg: {TOKENS["high_risk_fg"]};
     --high-risk-bg: {TOKENS["high_risk_bg"]};
     --high-risk-border: {TOKENS["high_risk_border"]};
+
+    /* Native Streamlit and BaseWeb CSS theme variable sync */
+    --text-color: {TOKENS["on_surface"]} !important;
+    --background-color: {TOKENS["surface"]} !important;
+    --secondary-background-color: {TOKENS["surface_low"]} !important;
+    --primary-color: {TOKENS["primary"]} !important;
 }}
 
-html, body, [class*="css"], [data-testid="stAppViewContainer"] {{
+html, body, [class*="css"], [data-testid="stAppViewContainer"], [data-testid="stApp"] {{
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    color: var(--on-surface) !important;
 }}
 
 .stApp {{
@@ -477,6 +484,13 @@ h1, h2, h3, h4, h5, h6 {{
     font-weight: 700 !important;
 }}
 
+/* Universal Page Headings, Text & Labels */
+h1, h2, h3, h4, h5, h6 {{
+    color: var(--on-surface) !important;
+    -webkit-text-fill-color: var(--on-surface) !important;
+    font-weight: 700 !important;
+}}
+
 p, span, div {{
     color: var(--on-surface);
 }}
@@ -484,20 +498,31 @@ p, span, div {{
 /* Universal Typography & Label Visibility Overrides */
 label, 
 [data-testid="stWidgetLabel"],
+[data-testid="stWidgetLabel"] label,
 [data-testid="stWidgetLabel"] p, 
 [data-testid="stWidgetLabel"] span,
-div[data-testid="stWidgetLabel"] *,
+[data-testid="stWidgetLabel"] div,
+[data-testid="stWidgetLabel"] *,
 .stSlider label,
+.stSlider label *,
 .stSelectbox label,
+.stSelectbox label *,
 .stNumberInput label,
+.stNumberInput label *,
 .stTextInput label,
+.stTextInput label *,
 .stMultiSelect label,
+.stMultiSelect label *,
 .stRadio label,
-[data-testid="stSidebar"] label {{
+.stRadio label *,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] label * {{
     color: var(--on-surface) !important;
+    -webkit-text-fill-color: var(--on-surface) !important;
     font-weight: 700 !important;
-    font-size: 0.88rem !important;
+    font-size: 0.9rem !important;
     opacity: 1 !important;
+    visibility: visible !important;
     line-height: 1.4 !important;
 }}
 
@@ -508,8 +533,9 @@ div[data-testid="stWidgetLabel"] *,
 [data-testid="stSlider"] span,
 [data-testid="stSliderThumbValue"] {{
     color: var(--on-surface) !important;
+    -webkit-text-fill-color: var(--on-surface) !important;
     font-weight: 600 !important;
-    font-size: 0.82rem !important;
+    font-size: 0.84rem !important;
 }}
 
 /* Form inputs & component styling */
@@ -528,35 +554,39 @@ div[data-baseweb="select"] {{
 
 div[data-baseweb="select"] > div {{
     background-color: var(--surface-low) !important;
-    border: 1px solid var(--outline-variant) !important;
+    border: 1.5px solid var(--outline-variant) !important;
     border-radius: 8px !important;
-    color: var(--on-surface) !important;
 }}
 
 /* Ensure the selected text inside selectboxes is 100% visible */
 div[data-baseweb="select"] div,
 div[data-baseweb="select"] span,
+div[data-baseweb="select"] p,
 div[data-baseweb="select"] [aria-selected="true"],
 div[data-baseweb="select"] [class*="valueContainer"] *,
 div[data-baseweb="select"] * {{
     color: var(--on-surface) !important;
+    -webkit-text-fill-color: var(--on-surface) !important;
     font-weight: 600 !important;
+    font-size: 0.92rem !important;
 }}
 
 /* Dropdown icon fill */
 div[data-baseweb="select"] svg {{
     fill: var(--on-surface) !important;
+    color: var(--on-surface) !important;
 }}
 
 /* DROPDOWN MENU / POPOVER LIST ITEMS (THE DROPDOWN LIST OPTIONS) */
 div[data-baseweb="popover"],
 div[data-baseweb="popover"] > div,
 ul[role="listbox"],
-div[data-baseweb="menu"] {{
-    background-color: var(--surface-lowest) !important;
-    border: 1px solid var(--outline-variant) !important;
+div[data-baseweb="menu"],
+div[data-baseweb="menu"] > ul {{
+    background-color: var(--surface-low) !important;
+    border: 1.5px solid var(--outline-variant) !important;
     border-radius: 8px !important;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35) !important;
     padding: 4px !important;
     z-index: 999999 !important;
 }}
@@ -566,37 +596,41 @@ li[role="option"],
 ul[role="listbox"] li,
 div[data-baseweb="menu"] li,
 div[data-baseweb="menu"] [role="option"] {{
-    background-color: var(--surface-lowest) !important;
+    background-color: var(--surface-low) !important;
     color: var(--on-surface) !important;
+    -webkit-text-fill-color: var(--on-surface) !important;
     font-weight: 600 !important;
     font-size: 0.9rem !important;
-    padding: 0.6rem 0.85rem !important;
+    padding: 0.65rem 0.95rem !important;
     border-radius: 6px !important;
     cursor: pointer !important;
+    margin-bottom: 2px !important;
 }}
 
 /* All nested spans/divs in dropdown options */
 li[role="option"] *,
 ul[role="listbox"] li *,
-div[data-baseweb="menu"] [role="option"] * {{
+div[data-baseweb="menu"] [role="option"] *,
+div[data-baseweb="popover"] * {{
     color: var(--on-surface) !important;
+    -webkit-text-fill-color: var(--on-surface) !important;
     font-weight: 600 !important;
 }}
 
 /* Hovered / highlighted dropdown item */
 li[role="option"]:hover,
-ul[role="listbox"] li:hover,
-li[role="option"][aria-selected="true"],
-ul[role="listbox"] li[aria-selected="true"],
-div[data-baseweb="menu"] [role="option"]:hover {{
-    background-color: var(--surface-container) !important;
-    color: var(--primary) !important;
-}}
-
 li[role="option"]:hover *,
+li[role="option"][aria-selected="true"],
+li[role="option"][aria-selected="true"] *,
+ul[role="listbox"] li:hover,
 ul[role="listbox"] li:hover *,
-li[role="option"][aria-selected="true"] * {{
-    color: var(--primary) !important;
+ul[role="listbox"] li[aria-selected="true"],
+ul[role="listbox"] li[aria-selected="true"] *,
+div[data-baseweb="menu"] [role="option"]:hover,
+div[data-baseweb="menu"] [role="option"]:hover * {{
+    background-color: var(--primary) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
 }}
 
 /* MultiSelect Tags / Badges (e.g. Territory Filter) */
@@ -1025,29 +1059,30 @@ if nav_selection == "Overview":
                 values=tier_df["Count"],
                 marker=dict(colors=tier_df["Color"], line=dict(color=TOKENS["chart_bg"], width=2.5)),
                 hole=0.62,
-                textinfo="label+percent",
-                textposition="outside",
-                textfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
+                textinfo="percent",
+                textposition="inside",
+                textfont=dict(family="Inter", size=14, color="#ffffff"),
+                insidetextorientation="horizontal",
                 hoverinfo="label+value+percent",
             ))
             fig_donut.update_layout(
                 showlegend=True,
                 legend=dict(
                     orientation="h",
-                    yanchor="bottom",
-                    y=-0.28,
+                    yanchor="top",
+                    y=-0.08,
                     xanchor="center",
                     x=0.5,
                     font=dict(family="Inter", size=12, color=TOKENS["on_surface"])
                 ),
                 annotations=[
                     dict(
-                        text=f"<b>{len(scored_data):,}</b><br><span style='font-size:11px; font-weight:600; color:{TOKENS['on_surface_variant']}'>Audited Accounts</span>",
+                        text=f"<b>{len(scored_data):,}</b><br><span style='font-size:12px; font-weight:600; color:{TOKENS['on_surface_variant']}'>Total Accounts</span>",
                         x=0.5, y=0.5, font_size=19, font_family="Inter", font_color=TOKENS["on_surface"],
                         showarrow=False
                     )
                 ],
-                margin=dict(l=20, r=20, t=30, b=50),
+                margin=dict(l=20, r=20, t=25, b=55),
             )
             render_precision_chart(fig_donut, height=380)
 
@@ -1065,6 +1100,7 @@ if nav_selection == "Overview":
                 MeanProb=("Churn_Probability", "mean")
             ).reset_index()
 
+            max_customers = geo_summary["Customers"].max()
             fig_geo = go.Figure()
             fig_geo.add_trace(go.Bar(
                 name="Total Accounts",
@@ -1086,21 +1122,23 @@ if nav_selection == "Overview":
             ))
             fig_geo.update_layout(
                 barmode="group",
+                margin=dict(l=30, r=30, t=55, b=30),
                 legend=dict(
                     orientation="h",
                     yanchor="bottom",
-                    y=1.04,
+                    y=1.05,
                     xanchor="right",
                     x=1,
                     font=dict(family="Inter", size=12, color=TOKENS["on_surface"])
                 ),
                 xaxis=dict(
                     title=dict(text="Territory / Country", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
-                    tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"])
+                    tickfont=dict(family="Inter", size=13, color=TOKENS["on_surface"])
                 ),
                 yaxis=dict(
                     title=dict(text="Account Count", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
-                    tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"])
+                    tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
+                    range=[0, max_customers * 1.22],
                 ),
             )
             render_precision_chart(fig_geo, height=380)
@@ -1208,13 +1246,19 @@ elif nav_selection == "Risk Calculator":
                 mode="gauge+number+delta",
                 value=round(prob * 100, 1),
                 number={"suffix": "%", "font": {"size": 44, "color": TOKENS["on_surface"], "family": "Inter"}},
-                delta={"reference": threshold * 100, "increasing": {"color": TOKENS["error"]}, "decreasing": {"color": TOKENS["tertiary"]}},
+                delta={
+                    "reference": threshold * 100,
+                    "increasing": {"color": TOKENS["error"]},
+                    "decreasing": {"color": TOKENS["tertiary"]},
+                    "font": {"size": 13, "family": "Inter"}
+                },
                 gauge={
                     "axis": {
                         "range": [0, 100],
                         "tickwidth": 1.5,
                         "tickcolor": TOKENS["on_surface"],
-                        "tickfont": {"size": 12, "color": TOKENS["on_surface"], "family": "Inter"}
+                        "tickfont": {"size": 12, "color": TOKENS["on_surface"], "family": "Inter"},
+                        "dtick": 20,
                     },
                     "bar": {"color": TOKENS["error"] if tier=="High" else (TOKENS["med_risk_fg"] if tier=="Medium" else TOKENS["tertiary"]), "thickness": 0.35},
                     "bgcolor": TOKENS["surface_container_lowest"],
@@ -1226,14 +1270,15 @@ elif nav_selection == "Risk Calculator":
                         {"range": [60, 100], "color": TOKENS["high_risk_bg"]},
                     ],
                     "threshold": {
-                        "line": {"color": TOKENS["on_surface"], "width": 3},
+                        "line": {"color": TOKENS["primary"], "width": 3},
                         "thickness": 0.85,
                         "value": threshold * 100,
                     },
                 },
-                title={"text": "<b>Estimated Churn Probability</b>", "font": {"size": 14, "color": TOKENS["on_surface"], "family": "Inter"}},
+                title={"text": "<b>Estimated Churn Probability</b>", "font": {"size": 15, "color": TOKENS["on_surface"], "family": "Inter"}},
             ))
-            render_precision_chart(gauge_fig, height=270)
+            gauge_fig.update_layout(margin=dict(l=25, r=25, t=40, b=25))
+            render_precision_chart(gauge_fig, height=310)
 
             # Tailored Retention Playbook (from stitch code.html)
             st.markdown(f"""
@@ -1283,8 +1328,11 @@ elif nav_selection == "Risk Calculator":
                 textposition="outside",
                 textfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
             ))
+            max_v = max(abs(shap_df["SHAP_Value"].min()), abs(shap_df["SHAP_Value"].max())) * 1.35
             fig_ind.update_layout(
+                margin=dict(l=35, r=35, t=35, b=35),
                 xaxis=dict(
+                    range=[-max_v, max_v],
                     title=dict(text="SHAP Impact on Model Log-Odds", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
                     tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"])
                 ),
@@ -1439,12 +1487,12 @@ elif nav_selection == "Probability Distribution":
 
             fig_dist.add_trace(go.Histogram(
                 x=retained, name="Retained Customers (Actual)", nbinsx=50,
-                marker_color=TOKENS["tertiary"], opacity=0.7,
+                marker_color=TOKENS["tertiary"], opacity=0.75,
                 histnorm="probability density",
             ))
             fig_dist.add_trace(go.Histogram(
                 x=churned, name="Churned Customers (Actual)", nbinsx=50,
-                marker_color=TOKENS["error"], opacity=0.7,
+                marker_color=TOKENS["error"], opacity=0.75,
                 histnorm="probability density",
             ))
 
@@ -1455,7 +1503,7 @@ elif nav_selection == "Probability Distribution":
                 annotation_font=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
                 annotation_bgcolor=TOKENS["surface_container"],
                 annotation_bordercolor=TOKENS["outline"],
-                annotation_borderpad=4,
+                annotation_borderpad=5,
             )
 
             # Zone rectangles
@@ -1465,25 +1513,31 @@ elif nav_selection == "Probability Distribution":
 
             fig_dist.update_layout(
                 barmode="overlay",
-                title="Empirical Churn Probability Density Across Exited vs Retained Cohorts",
+                title=dict(
+                    text="<b>Empirical Churn Probability Density Across Exited vs Retained Cohorts</b>",
+                    font=dict(family="Inter", size=15, color=TOKENS["on_surface"]),
+                    x=0.01,
+                    y=0.98,
+                ),
+                margin=dict(l=35, r=35, t=75, b=35),
                 xaxis=dict(
                     title=dict(text="Predicted Churn Probability", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
                     tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"])
                 ),
                 yaxis=dict(
-                    title=dict(text="Density", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
+                    title=dict(text="Probability Density", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
                     tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"])
                 ),
                 legend=dict(
                     orientation="h",
                     yanchor="bottom",
-                    y=1.02,
+                    y=1.04,
                     xanchor="right",
                     x=1,
                     font=dict(family="Inter", size=12, color=TOKENS["on_surface"])
                 ),
             )
-            render_precision_chart(fig_dist, height=420)
+            render_precision_chart(fig_dist, height=430)
 
         with pd_c2:
             st.markdown(f"""
@@ -1501,11 +1555,12 @@ elif nav_selection == "Probability Distribution":
 
         with seg1:
             geo_stats = scored_data.groupby("Geography")["Churn_Probability"].mean().reset_index()
+            max_geo = geo_stats["Churn_Probability"].max()
             fig_geo_b = px.bar(
                 geo_stats, x="Geography", y="Churn_Probability",
                 color="Churn_Probability",
                 color_continuous_scale=[[0, TOKENS["tertiary"]], [0.5, TOKENS["med_risk_fg"]], [1, TOKENS["error"]]],
-                title="Mean Churn Probability by Country",
+                title="<b>Mean Churn Probability by Country</b>",
                 labels={"Churn_Probability": "Mean Prob"},
                 text_auto=".3f",
             )
@@ -1515,16 +1570,18 @@ elif nav_selection == "Probability Distribution":
             )
             fig_geo_b.update_layout(
                 coloraxis_showscale=False,
+                margin=dict(l=30, r=30, t=55, b=30),
                 xaxis=dict(
                     title=dict(font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
                     tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"])
                 ),
                 yaxis=dict(
+                    range=[0, max_geo * 1.25],
                     title=dict(font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
                     tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"])
                 ),
             )
-            render_precision_chart(fig_geo_b, height=350)
+            render_precision_chart(fig_geo_b, height=360)
 
         with seg2:
             age_stats = scored_data.copy()
@@ -1533,11 +1590,12 @@ elif nav_selection == "Probability Distribution":
                 labels=["18-30","31-40","41-50","51-60","60+"]
             )
             ab = age_stats.groupby("Age_Band", observed=True)["Churn_Probability"].mean().reset_index()
+            max_age = ab["Churn_Probability"].max()
             fig_age_b = px.bar(
                 ab, x="Age_Band", y="Churn_Probability",
                 color="Churn_Probability",
                 color_continuous_scale=[[0, TOKENS["tertiary"]], [0.5, TOKENS["med_risk_fg"]], [1, TOKENS["error"]]],
-                title="Mean Churn Probability by Age Cohort",
+                title="<b>Mean Churn Probability by Age Cohort</b>",
                 labels={"Churn_Probability": "Mean Prob"},
                 text_auto=".3f",
             )
@@ -1547,16 +1605,18 @@ elif nav_selection == "Probability Distribution":
             )
             fig_age_b.update_layout(
                 coloraxis_showscale=False,
+                margin=dict(l=30, r=30, t=55, b=30),
                 xaxis=dict(
                     title=dict(font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
                     tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"])
                 ),
                 yaxis=dict(
+                    range=[0, max_age * 1.25],
                     title=dict(font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
                     tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"])
                 ),
             )
-            render_precision_chart(fig_age_b, height=350)
+            render_precision_chart(fig_age_b, height=360)
 
 
 # ══════════════════════════════════════════════
@@ -1582,6 +1642,7 @@ elif nav_selection == "Feature Importance":
             top_n = st.slider("Select Top N Attributes to Audit", 5, 20, 12, key="p_shap_slider")
             top = shap_importance.head(top_n).sort_values("Mean_Abs_SHAP")
 
+            max_shap = top["Mean_Abs_SHAP"].max()
             fig_bar = go.Figure(go.Bar(
                 x=top["Mean_Abs_SHAP"],
                 y=top["Feature"],
@@ -1595,7 +1656,9 @@ elif nav_selection == "Feature Importance":
                 textfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
             ))
             fig_bar.update_layout(
+                margin=dict(l=35, r=50, t=40, b=35),
                 xaxis=dict(
+                    range=[0, max_shap * 1.25],
                     title=dict(text="Mean |SHAP Value| (Impact on Model Confidence)", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
                     tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"])
                 ),
@@ -1813,14 +1876,15 @@ elif nav_selection == "What-If Simulator":
     fig_sw.add_hline(
         y=threshold, line_dash="dash", line_color=TOKENS["primary"], line_width=2.5,
         annotation_text=f"<b>Decision Cut-off ({threshold:.2f})</b>",
-        annotation_position="right",
+        annotation_position="top left",
         annotation_font=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
         annotation_bgcolor=TOKENS["surface_container"],
         annotation_bordercolor=TOKENS["outline"],
-        annotation_borderpad=4,
+        annotation_borderpad=5,
     )
     fig_sw.update_layout(
-        title=f"Sensitivity Curve: Impact of {sweep_feature} on Predicted Churn Risk",
+        title=f"<b>Sensitivity Curve: Impact of {sweep_feature} on Predicted Churn Risk</b>",
+        margin=dict(l=35, r=35, t=55, b=35),
         xaxis=dict(
             title=dict(text=sweep_feature, font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
             tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"])
@@ -1828,7 +1892,7 @@ elif nav_selection == "What-If Simulator":
         yaxis=dict(
             title=dict(text="Estimated Churn Probability", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
             tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
-            range=[0, 1]
+            range=[0, 1.05]
         ),
     )
     render_precision_chart(fig_sw, height=360)
