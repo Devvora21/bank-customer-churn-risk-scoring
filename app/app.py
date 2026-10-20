@@ -1880,13 +1880,95 @@ elif nav_selection == "Feature Importance":
         st.markdown(f"""
         <div class="precision-card">
             <div class="precision-card-header">🐝 SHAP Beeswarm Distribution Plot</div>
+            <p style='font-size:0.84rem; color:var(--on-surface-variant); margin:0 0 0.6rem 0;'>
+                Each dot is one customer. Horizontal position = model impact. Color = feature value (red = high, blue = low).
+                Updates live with the Top N slider on the left.
+            </p>
         </div>
         """, unsafe_allow_html=True)
-        beeswarm_path = os.path.join(FIGURES_DIR, "shap_summary_beeswarm.png")
-        if os.path.exists(beeswarm_path):
-            st.image(beeswarm_path, use_container_width=True)
-        else:
-            st.info("Run `python src/explain.py` to generate the beeswarm plot.")
+
+        # ── Dynamic beeswarm: regenerated whenever slider changes ──
+        try:
+            is_dark = st.session_state.get("theme", "light") == "dark"
+            bg_color  = "#111827" if is_dark else "#ffffff"
+            text_color = "#f8fafc" if is_dark else "#0f172a"
+            grid_color = "#1e293b" if is_dark else "#e2e8f0"
+
+            X_test_sw, _ = load_test_data()
+            X_bg_sw = X_test_sw.sample(min(300, len(X_test_sw)), random_state=42)
+            explainer_sw, feature_names_sw, preprocessor_sw = get_shap_explainer(pipeline, X_bg_sw)
+
+            # Transform a sample of test data
+            X_sample_sw = X_test_sw.sample(min(500, len(X_test_sw)), random_state=7)
+            X_trans_sw  = preprocessor_sw.transform(X_sample_sw)
+            import pandas as _pd
+            X_df_sw = _pd.DataFrame(X_trans_sw, columns=feature_names_sw)
+
+            # Compute SHAP values
+            shap_vals_sw = explainer_sw.shap_values(X_df_sw)
+            if isinstance(shap_vals_sw, list):
+                shap_vals_sw = shap_vals_sw[1]
+
+            # Filter to top_n features (from the left-column slider)
+            slider_val = st.session_state.get("p_shap_slider", 12)
+            mean_abs   = abs(shap_vals_sw).mean(axis=0)
+            top_idx    = mean_abs.argsort()[::-1][:slider_val]
+            shap_top   = shap_vals_sw[:, top_idx]
+            X_top      = X_df_sw.iloc[:, top_idx]
+
+            # Plot with matplotlib — themed
+            matplotlib.rcParams.update({
+                "text.color":   text_color,
+                "axes.labelcolor": text_color,
+                "xtick.color":  text_color,
+                "ytick.color":  text_color,
+                "axes.facecolor": bg_color,
+                "figure.facecolor": bg_color,
+            })
+
+            fig_bee, ax_bee = plt.subplots(figsize=(7, max(4, slider_val * 0.42)))
+            fig_bee.patch.set_facecolor(bg_color)
+            ax_bee.set_facecolor(bg_color)
+
+            shap.summary_plot(
+                shap_top,
+                X_top,
+                plot_type="dot",
+                show=False,
+                color_bar=True,
+                plot_size=None,
+                max_display=slider_val,
+            )
+
+            # Re-theme all text elements after shap draws them
+            for item in ([ax_bee.title, ax_bee.xaxis.label, ax_bee.yaxis.label] +
+                         ax_bee.get_xticklabels() + ax_bee.get_yticklabels()):
+                item.set_color(text_color)
+            ax_bee.tick_params(colors=text_color)
+            ax_bee.spines["bottom"].set_color(grid_color)
+            ax_bee.spines["left"].set_color(grid_color)
+            ax_bee.spines["top"].set_visible(False)
+            ax_bee.spines["right"].set_visible(False)
+            ax_bee.axvline(0, color=grid_color, linewidth=0.8, linestyle="--")
+
+            # Colorbar theming
+            for cb_ax in fig_bee.axes[1:]:
+                cb_ax.set_facecolor(bg_color)
+                cb_ax.tick_params(colors=text_color)
+                cb_ax.yaxis.label.set_color(text_color)
+
+            plt.tight_layout(pad=1.2)
+            st.pyplot(fig_bee, use_container_width=True)
+            plt.close(fig_bee)
+
+        except Exception as _e:
+            # Graceful fallback to static PNG if live generation fails
+            beeswarm_path = os.path.join(FIGURES_DIR, "shap_summary_beeswarm.png")
+            if os.path.exists(beeswarm_path):
+                st.image(beeswarm_path, use_container_width=True)
+                st.caption(f"⚠️ Live render failed ({_e}) — showing cached plot.")
+            else:
+                st.info(f"Could not generate beeswarm: {_e}")
 
     st.markdown("<div style='height:1.25rem;'></div>", unsafe_allow_html=True)
     p1, p2 = st.columns(2)
