@@ -179,52 +179,109 @@ TOKENS = DESIGN_SYSTEM[active_mode]
 # ──────────────────────────────────────────────
 
 def render_precision_chart(fig, height=360, use_container_width=True):
-    """Enforces Master-level Data Science visualization standards on all Plotly instances."""
+    """Enforces Master-level Data Science visualization standards on all Plotly instances,
+    guaranteeing crisp, contrasting visibility for X/Y axes, tick values, legend text, and markers
+    in both Dark and Light modes dynamically."""
+    is_dark = st.session_state.get("theme", "light") == "dark"
+    current_tokens = DESIGN_SYSTEM["dark"] if is_dark else DESIGN_SYSTEM["light"]
+    
+    # High-contrast accessibility tokens
+    axis_color = "#FFFFFF" if is_dark else "#0F172A"
+    tick_color = "#F1F5F9" if is_dark else "#1E293B"
+    tick_line_color = "#64748B" if is_dark else "#94A3B8"
+    grid_color = "#1E293B" if is_dark else "#E2E8F0"
+    border_color = "#334155" if is_dark else "#CBD5E1"
+    legend_bg = "rgba(17, 24, 39, 0.92)" if is_dark else "rgba(255, 255, 255, 0.92)"
+    legend_border = "#374151" if is_dark else "#CBD5E1"
+    legend_font_color = "#FFFFFF" if is_dark else "#0F172A"
+    hover_bg = "#1F2937" if is_dark else "#FFFFFF"
+    template_name = "plotly_dark" if is_dark else "plotly_white"
+
+    # 1. Base Layout & Theme Template
     fig.update_layout(
-        paper_bgcolor=TOKENS["chart_bg"],
-        plot_bgcolor=TOKENS["chart_surface"],
-        font=dict(family="Inter, -apple-system, sans-serif", color=TOKENS["on_surface"], size=13),
+        template=template_name,
+        paper_bgcolor=current_tokens["chart_bg"],
+        plot_bgcolor=current_tokens["chart_surface"],
+        font=dict(family="Inter, -apple-system, sans-serif", color=axis_color, size=13),
         title=dict(
-            font=dict(family="Inter, -apple-system, sans-serif", color=TOKENS["on_surface"], size=15),
+            font=dict(family="Inter, -apple-system, sans-serif", color=axis_color, size=15),
             x=0.01,
             xanchor="left",
         ),
         legend=dict(
-            font=dict(family="Inter, -apple-system, sans-serif", color=TOKENS["on_surface"], size=12),
-            bgcolor="rgba(0,0,0,0)",
+            font=dict(family="Inter, -apple-system, sans-serif", color=legend_font_color, size=12),
+            bgcolor=legend_bg,
+            bordercolor=legend_border,
+            borderwidth=1,
+            itemsizing="constant",
         ),
-        margin=dict(l=32, r=32, t=50, b=32),
         hoverlabel=dict(
-            bgcolor=TOKENS["surface_container_lowest"],
+            bgcolor=hover_bg,
             font_size=12,
             font_family="Inter, -apple-system, sans-serif",
-            font_color=TOKENS["on_surface"],
-            bordercolor=TOKENS["outline_variant"],
+            font_color=axis_color,
+            bordercolor=border_color,
         ),
     )
     if height:
         fig.update_layout(height=height)
-    
+
+    # Preserve custom margins if already configured by the chart, otherwise apply default
+    if not (fig.layout.margin and fig.layout.margin.t):
+        fig.update_layout(margin=dict(l=32, r=32, t=50, b=32))
+
+    # 2. Universal Axis Styling (X & Y Axes)
     fig.update_xaxes(
-        tickfont=dict(family="Inter, -apple-system, sans-serif", color=TOKENS["on_surface"], size=12),
-        title_font=dict(family="Inter, -apple-system, sans-serif", color=TOKENS["on_surface"], size=13),
-        gridcolor=TOKENS["grid_color"],
+        color=axis_color,
+        tickfont=dict(family="Inter, -apple-system, sans-serif", color=tick_color, size=12),
+        title_font=dict(family="Inter, -apple-system, sans-serif", color=axis_color, size=13),
+        tickcolor=tick_line_color,
+        gridcolor=grid_color,
         gridwidth=1,
-        zerolinecolor=TOKENS["outline_variant"],
+        zerolinecolor=border_color,
         zerolinewidth=1.5,
-        linecolor=TOKENS["outline_variant"],
+        linecolor=border_color,
         linewidth=1.2,
+        showline=True,
+        showticklabels=True,
     )
     fig.update_yaxes(
-        tickfont=dict(family="Inter, -apple-system, sans-serif", color=TOKENS["on_surface"], size=12),
-        title_font=dict(family="Inter, -apple-system, sans-serif", color=TOKENS["on_surface"], size=13),
-        gridcolor=TOKENS["grid_color"],
+        color=axis_color,
+        tickfont=dict(family="Inter, -apple-system, sans-serif", color=tick_color, size=12),
+        title_font=dict(family="Inter, -apple-system, sans-serif", color=axis_color, size=13),
+        tickcolor=tick_line_color,
+        gridcolor=grid_color,
         gridwidth=1,
-        zerolinecolor=TOKENS["outline_variant"],
+        zerolinecolor=border_color,
         zerolinewidth=1.5,
-        linecolor=TOKENS["outline_variant"],
+        linecolor=border_color,
         linewidth=1.2,
+        showline=True,
+        showticklabels=True,
     )
+
+    # 3. Trace Elements & Outside Text Visibility
+    for trace in fig.data:
+        # Outside text on bars / markers
+        if hasattr(trace, "textposition") and trace.textposition in ("outside", "auto"):
+            if hasattr(trace, "textfont"):
+                trace.textfont.color = axis_color
+        # Indicator Gauge Chart visibility
+        if trace.type == "indicator":
+            if hasattr(trace, "number") and trace.number:
+                trace.number.font.color = axis_color
+            if hasattr(trace, "title") and trace.title:
+                trace.title.font.color = axis_color
+            if hasattr(trace, "gauge") and trace.gauge and hasattr(trace.gauge, "axis") and trace.gauge.axis:
+                trace.gauge.axis.tickcolor = axis_color
+                trace.gauge.axis.tickfont.color = axis_color
+
+    # 4. Annotations Visibility
+    if hasattr(fig.layout, "annotations") and fig.layout.annotations:
+        for ann in fig.layout.annotations:
+            if hasattr(ann, "font") and ann.font:
+                ann.font.color = axis_color
+
     st.plotly_chart(fig, use_container_width=use_container_width, theme=None)
 
 
@@ -552,38 +609,58 @@ div[data-testid="stForm"] {{
     padding: 1.5rem !important;
 }}
 
-/* Dropdown / Selectbox container, value & placeholder */
+/* ═══════════════════════════════════════════════════
+   PREMIUM DROPDOWN / SELECTBOX DESIGN SYSTEM
+   Identical look in Light & Dark — polished & crisp
+   ═══════════════════════════════════════════════════ */
+
+/* ── Closed-state trigger / pill (the visible box) ── */
 div[data-baseweb="select"] {{
-    background-color: var(--surface-low) !important;
-    border-radius: 8px !important;
+    border-radius: 9px !important;
 }}
 
 div[data-baseweb="select"] > div {{
     background-color: var(--surface-low) !important;
     border: 1.5px solid var(--outline-variant) !important;
-    border-radius: 8px !important;
+    border-radius: 9px !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+    min-height: 2.6rem !important;
 }}
 
-/* Ensure the selected text inside selectboxes is 100% visible */
+/* Focused / active trigger */
+div[data-baseweb="select"] > div:focus-within,
+div[data-baseweb="select"][aria-expanded="true"] > div {{
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18) !important;
+    outline: none !important;
+}}
+
+/* ── Selected value text & placeholder ── */
 div[data-baseweb="select"] div,
 div[data-baseweb="select"] span,
 div[data-baseweb="select"] p,
 div[data-baseweb="select"] [aria-selected="true"],
 div[data-baseweb="select"] [class*="valueContainer"] *,
 div[data-baseweb="select"] * {{
+    background-color: transparent !important;
     color: var(--on-surface) !important;
     -webkit-text-fill-color: var(--on-surface) !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
     font-weight: 600 !important;
-    font-size: 0.92rem !important;
+    font-size: 0.9rem !important;
 }}
 
-/* Dropdown icon fill */
-div[data-baseweb="select"] svg {{
-    fill: var(--on-surface) !important;
-    color: var(--on-surface) !important;
+/* ── Chevron / caret icon ── */
+div[data-baseweb="select"] svg,
+div[data-baseweb="select"] svg path {{
+    fill: var(--on-surface-variant) !important;
+    color: var(--on-surface-variant) !important;
+    opacity: 0.85 !important;
 }}
 
-/* DROPDOWN MENU / POPOVER LIST ITEMS (THE DROPDOWN LIST OPTIONS) */
+/* ══════════════════════════════════════════
+   DROPDOWN LIST PANEL (the floating popup)
+   ══════════════════════════════════════════ */
 div[data-baseweb="popover"],
 div[data-baseweb="popover"] > div,
 ul[role="listbox"],
@@ -591,71 +668,102 @@ div[data-baseweb="menu"],
 div[data-baseweb="menu"] > ul {{
     background-color: var(--surface-low) !important;
     border: 1.5px solid var(--outline-variant) !important;
-    border-radius: 8px !important;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35) !important;
-    padding: 4px !important;
+    border-radius: 10px !important;
+    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.42),
+                0 4px 12px -4px rgba(0, 0, 0, 0.22) !important;
+    padding: 6px 4px !important;
     z-index: 999999 !important;
+    overflow: hidden !important;
 }}
 
-/* Options inside dropdown list */
+/* ── Individual dropdown option row ── */
 li[role="option"],
 ul[role="listbox"] li,
 div[data-baseweb="menu"] li,
 div[data-baseweb="menu"] [role="option"] {{
-    background-color: var(--surface-low) !important;
+    background-color: transparent !important;
     color: var(--on-surface) !important;
     -webkit-text-fill-color: var(--on-surface) !important;
-    font-weight: 600 !important;
-    font-size: 0.9rem !important;
-    padding: 0.65rem 0.95rem !important;
-    border-radius: 6px !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 0.88rem !important;
+    padding: 0.6rem 0.9rem !important;
+    border-radius: 7px !important;
     cursor: pointer !important;
-    margin-bottom: 2px !important;
+    margin: 2px 2px !important;
+    transition: background-color 0.1s ease, color 0.1s ease !important;
 }}
 
-/* All nested spans/divs in dropdown options */
+/* All nested spans/divs in dropdown options — text stays crisp */
 li[role="option"] *,
 ul[role="listbox"] li *,
 div[data-baseweb="menu"] [role="option"] *,
-div[data-baseweb="popover"] * {{
+div[data-baseweb="menu"] li * {{
     color: var(--on-surface) !important;
     -webkit-text-fill-color: var(--on-surface) !important;
-    font-weight: 600 !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    font-weight: 500 !important;
+    background-color: transparent !important;
 }}
 
-/* Hovered / highlighted dropdown item */
+/* ── Hover / active / selected state ── */
 li[role="option"]:hover,
-li[role="option"]:hover *,
-li[role="option"][aria-selected="true"],
-li[role="option"][aria-selected="true"] *,
 ul[role="listbox"] li:hover,
-ul[role="listbox"] li:hover *,
-ul[role="listbox"] li[aria-selected="true"],
-ul[role="listbox"] li[aria-selected="true"] *,
 div[data-baseweb="menu"] [role="option"]:hover,
-div[data-baseweb="menu"] [role="option"]:hover * {{
+div[data-baseweb="menu"] li:hover {{
     background-color: var(--primary) !important;
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
 }}
 
-/* MultiSelect Tags / Badges (e.g. Territory Filter) */
+li[role="option"]:hover *,
+ul[role="listbox"] li:hover *,
+div[data-baseweb="menu"] [role="option"]:hover *,
+div[data-baseweb="menu"] li:hover * {{
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}}
+
+li[role="option"][aria-selected="true"],
+ul[role="listbox"] li[aria-selected="true"] {{
+    background-color: var(--primary-container) !important;
+    color: var(--on-primary-container) !important;
+    -webkit-text-fill-color: var(--on-primary-container) !important;
+    font-weight: 700 !important;
+}}
+
+li[role="option"][aria-selected="true"] *,
+ul[role="listbox"] li[aria-selected="true"] * {{
+    color: var(--on-primary-container) !important;
+    -webkit-text-fill-color: var(--on-primary-container) !important;
+    font-weight: 700 !important;
+}}
+
+/* ══════════════════════════════════════════
+   MULTISELECT TAGS / CHIPS
+   ══════════════════════════════════════════ */
 span[data-baseweb="tag"] {{
-    background-color: var(--surface-container) !important;
-    border: 1px solid var(--outline-variant) !important;
+    background-color: var(--primary-container) !important;
+    border: 1px solid var(--primary) !important;
     border-radius: 6px !important;
-    padding: 2px 6px !important;
+    padding: 3px 8px !important;
+    gap: 4px !important;
 }}
 
 span[data-baseweb="tag"] span,
 span[data-baseweb="tag"] div {{
-    color: var(--on-surface) !important;
+    color: var(--on-primary-container) !important;
+    -webkit-text-fill-color: var(--on-primary-container) !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
     font-weight: 600 !important;
-    font-size: 0.82rem !important;
+    font-size: 0.81rem !important;
 }}
 
-span[data-baseweb="tag"] [role="presentation"] svg {{
-    fill: var(--on-surface) !important;
+span[data-baseweb="tag"] [role="presentation"] svg,
+span[data-baseweb="tag"] svg {{
+    fill: var(--on-primary-container) !important;
+    color: var(--on-primary-container) !important;
+    opacity: 0.8 !important;
 }}
 
 /* Text Input & Number Input fields */
@@ -797,6 +905,99 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] * {{
 [data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) p {{
     color: var(--primary) !important;
     font-weight: 700 !important;
+}}
+
+/* ──────────────────────────────────────────────
+   Plotly Enterprise Chart Visibility Engine
+   Ensures X/Y axis labels, tick values, legend text & markers
+   remain ultra-crisp and legible in both dark & light themes
+   ────────────────────────────────────────────── */
+.js-plotly-plot, .plot-container {{
+    border-radius: 10px !important;
+}}
+
+/* Legend Text Contrast */
+.js-plotly-plot text.legendtext,
+.js-plotly-plot g.legend text,
+.js-plotly-plot .legend text {{
+    fill: var(--on-surface) !important;
+    color: var(--on-surface) !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 12px !important;
+    opacity: 1 !important;
+}}
+
+/* Axis Tick Labels (Numbers & Categories) */
+.js-plotly-plot g.xtick text,
+.js-plotly-plot g.ytick text,
+.js-plotly-plot .xtick text,
+.js-plotly-plot .ytick text {{
+    fill: var(--on-surface) !important;
+    color: var(--on-surface) !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 11.5px !important;
+    opacity: 0.95 !important;
+}}
+
+/* Axis Titles (X & Y Axis Labels) */
+.js-plotly-plot g.xtitle text,
+.js-plotly-plot g.ytitle text,
+.js-plotly-plot .xtitle text,
+.js-plotly-plot .ytitle text {{
+    fill: var(--on-surface) !important;
+    color: var(--on-surface) !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    opacity: 1 !important;
+}}
+
+/* Chart Master Titles */
+.js-plotly-plot text.gtitle,
+.js-plotly-plot .gtitle text {{
+    fill: var(--on-surface) !important;
+    color: var(--on-surface) !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    font-weight: 700 !important;
+}}
+
+/* Legend Markers, Dots, & Swatches */
+.js-plotly-plot g.legend .legendpoints path,
+.js-plotly-plot g.legend .legendpoints rect,
+.js-plotly-plot g.legend .legendpoints circle,
+.js-plotly-plot .legend .legendpoints path,
+.js-plotly-plot .legend .legendpoints rect,
+.js-plotly-plot .legend .legendpoints circle {{
+    opacity: 1 !important;
+    stroke-width: 1.5px !important;
+}}
+
+/* Legend Card Background Container */
+.js-plotly-plot g.legend rect.bg,
+.js-plotly-plot .legend rect.bg {{
+    fill-opacity: 0.92 !important;
+    stroke: var(--outline-variant) !important;
+    stroke-width: 1px !important;
+}}
+
+/* Outside Bar and Scatter Value Labels */
+.js-plotly-plot g.text text,
+.js-plotly-plot g.bar text.pointtext,
+.js-plotly-plot g.trace text {{
+    fill: var(--on-surface) !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    font-weight: 600 !important;
+}}
+
+/* Protect Inside Pie / Donut Slice Percentage Text (stays bright white) */
+.js-plotly-plot g.slice text,
+.js-plotly-plot text.insidetext {{
+    fill: #ffffff !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    opacity: 1 !important;
 }}
 </style>
 """
