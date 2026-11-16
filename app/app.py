@@ -780,14 +780,28 @@ div[data-baseweb="input"] > div {{
 
 input, select, textarea {{
     color: var(--on-surface) !important;
+    -webkit-text-fill-color: var(--on-surface) !important;
     background-color: transparent !important;
     font-weight: 600 !important;
     font-size: 0.92rem !important;
 }}
 
+/* Number input spin buttons & inner value */
+[data-testid="stNumberInput"] input,
+[data-testid="stNumberInputField"] input,
+div[data-baseweb="input"] input {{
+    color: var(--on-surface) !important;
+    -webkit-text-fill-color: var(--on-surface) !important;
+    background-color: transparent !important;
+    font-weight: 600 !important;
+    font-size: 0.92rem !important;
+    caret-color: var(--on-surface) !important;
+}}
+
 input::placeholder, textarea::placeholder {{
     color: var(--on-surface-variant) !important;
-    opacity: 0.8 !important;
+    -webkit-text-fill-color: var(--on-surface-variant) !important;
+    opacity: 0.75 !important;
 }}
 
 /* Radio button options */
@@ -2088,21 +2102,25 @@ elif nav_selection == "What-If Simulator":
 
         si1, si2, si3 = st.columns(3)
         with si1:
-            sim_credit  = st.number_input("Credit Score", min_value=300, max_value=850, value=650, step=1, key="sim_cs_direct")
+            sim_credit  = st.number_input("Credit Score", min_value=0, max_value=850, value=0, step=1, key="sim_cs_direct")
             sim_geo     = st.selectbox("Geography", ["France", "Germany", "Spain"], index=None, placeholder="Select Country...", key="sim_geo_direct")
             sim_gender  = st.selectbox("Gender", ["Female", "Male"], index=None, placeholder="Select Gender...", key="sim_gen_direct")
         with si2:
-            sim_age     = st.number_input("Age", min_value=18, max_value=92, value=35, step=1, key="sim_age_direct")
-            sim_tenure  = st.number_input("Tenure (years)", min_value=0, max_value=10, value=3, step=1, key="sim_ten_direct")
+            sim_age     = st.number_input("Age", min_value=0, max_value=92, value=0, step=1, key="sim_age_direct")
+            sim_tenure  = st.number_input("Tenure (years)", min_value=0, max_value=10, value=0, step=1, key="sim_ten_direct")
             sim_balance = st.number_input("Account Balance (€)", min_value=0.0, max_value=250000.0, value=0.0, step=1000.0, key="sim_bal_direct")
         with si3:
             sim_prods   = st.selectbox("Num. Products", [1, 2, 3, 4], index=None, placeholder="Select...", key="sim_prod_direct")
             sim_card    = st.selectbox("Has Credit Card?", [1, 0], index=None, placeholder="Select...", format_func=lambda x: "Yes" if x == 1 else "No", key="sim_card_direct")
             sim_active  = st.selectbox("Active Member?", [1, 0], index=None, placeholder="Select...", format_func=lambda x: "Active" if x == 1 else "Inactive", key="sim_act_direct")
-            sim_salary  = st.number_input("Est. Annual Salary (€)", min_value=0.0, max_value=500000.0, value=50000.0, step=1000.0, key="sim_sal_direct")
+            sim_salary  = st.number_input("Est. Annual Salary (€)", min_value=0.0, max_value=500000.0, value=0.0, step=1000.0, key="sim_sal_direct")
 
-        # Validate required fields
+        # Validate required fields (dropdowns must be selected; numerics must be > 0)
         _missing = [f for f, v in [("Geography", sim_geo), ("Gender", sim_gender), ("Num. Products", sim_prods), ("Credit Card", sim_card), ("Active Member", sim_active)] if v is None]
+        if sim_credit == 0:
+            _missing.append("Credit Score (enter a value > 0)")
+        if sim_age == 0:
+            _missing.append("Age (enter a value > 0)")
         if _missing:
             st.warning(f"⚠️ Please select: {', '.join(_missing)} to run the simulation.")
             st.stop()
