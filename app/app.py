@@ -1159,9 +1159,9 @@ st.markdown(f"""
 if nav_selection == "Overview":
     if scored_data is not None:
         total = len(scored_data)
-        n_high = int((scored_data["Risk_Tier"] == "High").sum())
-        n_med = int((scored_data["Risk_Tier"] == "Medium").sum())
-        n_low = int((scored_data["Risk_Tier"] == "Low").sum())
+        n_high = (scored_data["Risk_Tier"] == "High").sum()
+        n_med = (scored_data["Risk_Tier"] == "Medium").sum()
+        n_low = (scored_data["Risk_Tier"] == "Low").sum()
         churn_rate = float(scored_data["Churn_Predicted"].mean())
         avg_prob = float(scored_data["Churn_Probability"].mean())
 
@@ -1384,12 +1384,12 @@ elif nav_selection == "Risk Calculator":
             st.markdown(f"<div style='font-size:0.85rem; font-weight:700; color:var(--primary); text-transform:uppercase; margin-bottom:0.4rem;'>Section A: Personal & Demographic</div>", unsafe_allow_html=True)
             c1, c2 = st.columns(2)
             with c1:
-                credit_score = st.slider("Credit Score (FICO Equivalent)", 300, 850, 650, step=1, key="p_cs")
-                geography = st.selectbox("Geography (Territory)", ["Germany", "France", "Spain"], key="p_geo")
-                age = st.slider("Customer Age", 18, 92, 42, key="p_age")
+                credit_score = st.number_input("Credit Score (FICO Equivalent)", min_value=0, max_value=850, value=0, step=1, key="p_cs")
+                geography = st.selectbox("Geography (Territory)", ["France", "Germany", "Spain"], index=None, placeholder="Select Territory / Country...", key="p_geo")
+                age = st.number_input("Customer Age", min_value=0, max_value=120, value=0, step=1, key="p_age")
             with c2:
-                gender = st.selectbox("Customer Gender", ["Female", "Male"], key="p_gen")
-                tenure = st.slider("Tenure with Bank (Years)", 0, 10, 5, key="p_ten")
+                gender = st.selectbox("Customer Gender", ["Female", "Male"], index=None, placeholder="Select Gender...", key="p_gen")
+                tenure = st.number_input("Tenure with Bank (Years)", min_value=0, max_value=15, value=0, step=1, key="p_ten")
 
             st.markdown("<div style='height:0.75rem;'></div>", unsafe_allow_html=True)
             
@@ -1397,31 +1397,50 @@ elif nav_selection == "Risk Calculator":
             st.markdown(f"<div style='font-size:0.85rem; font-weight:700; color:var(--primary); text-transform:uppercase; margin-bottom:0.4rem;'>Section B: Financial & Relationship Holdings</div>", unsafe_allow_html=True)
             f1, f2 = st.columns(2)
             with f1:
-                balance = st.number_input("Account Balance (€)", 0.0, 300000.0, 85000.0, step=1000.0, key="p_bal")
-                estimated_salary = st.number_input("Estimated Annual Salary (€)", 0.0, 250000.0, 79500.0, step=1000.0, key="p_sal")
+                balance = st.number_input("Account Balance (€)", min_value=0.0, max_value=500000.0, value=0.0, step=1000.0, key="p_bal")
+                estimated_salary = st.number_input("Estimated Annual Salary (€)", min_value=0.0, max_value=500000.0, value=0.0, step=1000.0, key="p_sal")
             with f2:
-                num_products = st.selectbox("Active Products Subscribed", [1, 2, 3, 4], index=0, key="p_nop")
-                has_cr_card = st.radio("Has Credit Card?", [1, 0], format_func=lambda x: "Yes (Issued)" if x == 1 else "No", horizontal=True, key="p_hcc")
-                is_active = st.radio("Active Digital Member?", [1, 0], index=1, format_func=lambda x: "Active (Online)" if x == 1 else "Inactive (Alert)", horizontal=True, key="p_iam")
+                num_products = st.selectbox("Active Products Subscribed", [1, 2, 3, 4], index=None, placeholder="Select Number of Products...", key="p_nop")
+                has_cr_card = st.selectbox("Has Credit Card?", [1, 0], index=None, placeholder="Select Credit Card Status...", format_func=lambda x: "Yes (Issued)" if x == 1 else "No", key="p_hcc")
+                is_active = st.selectbox("Active Digital Member?", [1, 0], index=None, placeholder="Select Digital Activity...", format_func=lambda x: "Active (Online)" if x == 1 else "Inactive (Alert)", key="p_iam")
 
             st.markdown("<div style='height:0.8rem;'></div>", unsafe_allow_html=True)
             submitted = st.form_submit_button("⚡ Calculate Churn Risk Propensity", use_container_width=True, type="primary")
 
-    # If user submitted or first time landing on calculator, compute prediction so right panel is full and informative
-    if submitted or st.session_state.get("last_result") is None:
-        customer_df = prepare_customer_input(
-            credit_score, geography, gender, age, tenure,
-            balance, num_products, has_cr_card, is_active, estimated_salary,
-        )
-        result = predict_single(customer_df, pipeline, threshold)
-        st.session_state["last_result"] = result
-        st.session_state["last_customer_df"] = customer_df
-        st.session_state["last_inputs"] = {
-            "credit_score": credit_score, "geography": geography, "gender": gender,
-            "age": age, "tenure": tenure, "balance": balance,
-            "num_products": num_products, "has_cr_card": has_cr_card,
-            "is_active": is_active, "salary": estimated_salary,
-        }
+    # Only compute prediction when the user actively submits the form
+    if submitted:
+        missing_fields = []
+        if geography is None:
+            missing_fields.append("Geography")
+        if gender is None:
+            missing_fields.append("Gender")
+        if num_products is None:
+            missing_fields.append("Active Products")
+        if has_cr_card is None:
+            missing_fields.append("Credit Card Status")
+        if is_active is None:
+            missing_fields.append("Active Member Status")
+        if credit_score == 0:
+            missing_fields.append("Credit Score")
+        if age == 0:
+            missing_fields.append("Customer Age")
+
+        if missing_fields:
+            st.warning(f"⚠️ Please specify all customer fields before calculating: **{', '.join(missing_fields)}**")
+        else:
+            customer_df = prepare_customer_input(
+                credit_score, geography, gender, age, tenure,
+                balance, num_products, has_cr_card, is_active, estimated_salary,
+            )
+            result = predict_single(customer_df, pipeline, threshold)
+            st.session_state["last_result"] = result
+            st.session_state["last_customer_df"] = customer_df
+            st.session_state["last_inputs"] = {
+                "credit_score": credit_score, "geography": geography, "gender": gender,
+                "age": age, "tenure": tenure, "balance": balance,
+                "num_products": num_products, "has_cr_card": has_cr_card,
+                "is_active": is_active, "salary": estimated_salary,
+            }
 
     with calc_right:
         if st.session_state.get("last_result") is not None:
@@ -1602,19 +1621,34 @@ elif nav_selection == "Portfolio Explorer":
         flt1, flt2, flt3, flt4 = st.columns(4)
 
         with flt1:
-            geo_filter = st.multiselect("Territory Filter", ["All", "France", "Germany", "Spain"], default=["All"])
+            geo_filter = st.multiselect(
+                "Territory Filter",
+                ["France", "Germany", "Spain"],
+                default=[],
+                placeholder="Select territory / country...",
+            )
         with flt2:
-            tier_filter = st.multiselect("Risk Tier Filter", ["All", "High", "Medium", "Low"], default=["All"])
+            tier_filter = st.multiselect(
+                "Risk Tier Filter",
+                ["High", "Medium", "Low"],
+                default=[],
+                placeholder="Select risk tier(s)...",
+            )
         with flt3:
-            active_filter = st.selectbox("Digital Member Status", ["All", "Active Only", "Inactive Only"])
+            active_filter = st.selectbox(
+                "Digital Member Status",
+                ["Active Only", "Inactive Only"],
+                index=None,
+                placeholder="Select Member Status...",
+            )
         with flt4:
             search_query = st.text_input("Search Customer ID / Surname", "")
 
         # Apply filtering
         filtered_df = scored_data.copy()
-        if "All" not in geo_filter and len(geo_filter) > 0:
+        if len(geo_filter) > 0:
             filtered_df = filtered_df[filtered_df["Geography"].isin(geo_filter)]
-        if "All" not in tier_filter and len(tier_filter) > 0:
+        if len(tier_filter) > 0:
             filtered_df = filtered_df[filtered_df["Risk_Tier"].isin(tier_filter)]
         if active_filter == "Active Only":
             filtered_df = filtered_df[filtered_df["IsActiveMember"] == 1]
@@ -1631,13 +1665,17 @@ elif nav_selection == "Portfolio Explorer":
                 cond = filtered_df["Geography"].astype(str).str.lower().str.contains(q)
             filtered_df = filtered_df[cond]
 
+        has_active_filters = len(geo_filter) > 0 or len(tier_filter) > 0 or active_filter is not None or bool(search_query.strip())
+        filter_status_text = "● Filter Active" if has_active_filters else "● Full Portfolio (No Filters Applied)"
+        filter_status_color = "var(--primary)" if has_active_filters else "var(--on-surface-variant)"
+
         st.markdown(f"""
         <div style="display:flex; justify-content:space-between; align-items:center; margin: 0.5rem 0 1rem 0;">
             <div style="font-size:0.86rem; color:var(--on-surface-variant);">
                 Displaying <b>{len(filtered_df):,}</b> of <b>{len(scored_data):,}</b> accounts (<b>{len(filtered_df)/len(scored_data):.1%}</b> of portfolio)
             </div>
             <div>
-                <span style="font-size:0.8rem; font-weight:600; color:var(--primary);">● Live Filter Active</span>
+                <span style="font-size:0.8rem; font-weight:600; color:{filter_status_color};">{filter_status_text}</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -1846,35 +1884,52 @@ elif nav_selection == "Feature Importance":
         </div>
         """, unsafe_allow_html=True)
         if shap_importance is not None:
-            top_n = st.slider("Select Top N Attributes to Audit", 5, 20, 12, key="p_shap_slider")
-            top = shap_importance.head(top_n).sort_values("Mean_Abs_SHAP")
-
-            max_shap = top["Mean_Abs_SHAP"].max()
-            fig_bar = go.Figure(go.Bar(
-                x=top["Mean_Abs_SHAP"],
-                y=top["Feature"],
-                orientation="h",
-                marker=dict(
-                    color=top["Mean_Abs_SHAP"],
-                    colorscale=[[0, TOKENS["primary_container"]], [1, TOKENS["primary"]]],
-                ),
-                text=[f"{v:.4f}" for v in top["Mean_Abs_SHAP"]],
-                textposition="outside",
-                textfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
-            ))
-            fig_bar.update_layout(
-                margin=dict(l=35, r=50, t=40, b=35),
-                xaxis=dict(
-                    range=[0, max_shap * 1.25],
-                    title=dict(text="Mean |SHAP Value| (Impact on Model Confidence)", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
-                    tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"])
-                ),
-                yaxis=dict(
-                    title=dict(text="Feature Dimension", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
-                    tickfont=dict(family="Inter", size=13, color=TOKENS["on_surface"])
-                ),
+            top_n = st.selectbox(
+                "Select Top N Attributes to Audit",
+                options=[5, 8, 10, 12, 15, 20],
+                index=None,
+                placeholder="Select Top N Attributes to Audit...",
+                key="p_shap_select",
             )
-            render_precision_chart(fig_bar, height=480)
+            if top_n is not None and top_n > 0:
+                top = shap_importance.head(top_n).sort_values("Mean_Abs_SHAP")
+
+                max_shap = top["Mean_Abs_SHAP"].max()
+                fig_bar = go.Figure(go.Bar(
+                    x=top["Mean_Abs_SHAP"],
+                    y=top["Feature"],
+                    orientation="h",
+                    marker=dict(
+                        color=top["Mean_Abs_SHAP"],
+                        colorscale=[[0, TOKENS["primary_container"]], [1, TOKENS["primary"]]],
+                    ),
+                    text=[f"{v:.4f}" for v in top["Mean_Abs_SHAP"]],
+                    textposition="outside",
+                    textfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
+                ))
+                fig_bar.update_layout(
+                    margin=dict(l=35, r=50, t=40, b=35),
+                    xaxis=dict(
+                        range=[0, max_shap * 1.25],
+                        title=dict(text="Mean |SHAP Value| (Impact on Model Confidence)", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
+                        tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"])
+                    ),
+                    yaxis=dict(
+                        title=dict(text="Feature Dimension", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
+                        tickfont=dict(family="Inter", size=13, color=TOKENS["on_surface"])
+                    ),
+                )
+                render_precision_chart(fig_bar, height=480)
+            else:
+                st.markdown(f"""
+                <div class="precision-card" style="text-align:center; padding:3.5rem 1.5rem;">
+                    <div style="font-size:2.2rem; margin-bottom:0.75rem;">📊</div>
+                    <div style="font-size:1.05rem; font-weight:700; color:var(--on-surface);">No Attribute Count Selected</div>
+                    <div style="font-size:0.86rem; color:var(--on-surface-variant); max-width:320px; margin:0.5rem auto 0 auto;">
+                        Select the number of top attributes from the dropdown above to display the feature importance rankings.
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
     with fi2:
         st.markdown(f"""
@@ -1882,93 +1937,104 @@ elif nav_selection == "Feature Importance":
             <div class="precision-card-header">🐝 SHAP Beeswarm Distribution Plot</div>
             <p style='font-size:0.84rem; color:var(--on-surface-variant); margin:0 0 0.6rem 0;'>
                 Each dot is one customer. Horizontal position = model impact. Color = feature value (red = high, blue = low).
-                Updates live with the Top N slider on the left.
+                Updates live when Top N attributes are selected.
             </p>
         </div>
         """, unsafe_allow_html=True)
 
-        # ── Dynamic beeswarm: regenerated whenever slider changes ──
-        try:
-            is_dark = st.session_state.get("theme", "light") == "dark"
-            bg_color  = "#111827" if is_dark else "#ffffff"
-            text_color = "#f8fafc" if is_dark else "#0f172a"
-            grid_color = "#1e293b" if is_dark else "#e2e8f0"
+        if top_n is None or top_n == 0:
+            st.markdown(f"""
+            <div class="precision-card" style="text-align:center; padding:3.5rem 1.5rem;">
+                <div style="font-size:2.2rem; margin-bottom:0.75rem;">🐝</div>
+                <div style="font-size:1.05rem; font-weight:700; color:var(--on-surface);">Awaiting Attribute Selection</div>
+                <div style="font-size:0.86rem; color:var(--on-surface-variant); max-width:320px; margin:0.5rem auto 0 auto;">
+                    Select the Top N attribute count from the dropdown on the left to generate the Beeswarm distribution plot.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            # ── Dynamic beeswarm: regenerated whenever dropdown selection changes ──
+            try:
+                is_dark = st.session_state.get("theme", "light") == "dark"
+                bg_color  = "#111827" if is_dark else "#ffffff"
+                text_color = "#f8fafc" if is_dark else "#0f172a"
+                grid_color = "#1e293b" if is_dark else "#e2e8f0"
 
-            X_test_sw, _ = load_test_data()
-            X_bg_sw = X_test_sw.sample(min(300, len(X_test_sw)), random_state=42)
-            explainer_sw, feature_names_sw, preprocessor_sw = get_shap_explainer(pipeline, X_bg_sw)
+                X_test_sw, _ = load_test_data()
+                X_bg_sw = X_test_sw.sample(min(300, len(X_test_sw)), random_state=42)
+                explainer_sw, feature_names_sw, preprocessor_sw = get_shap_explainer(pipeline, X_bg_sw)
 
-            # Transform a sample of test data
-            X_sample_sw = X_test_sw.sample(min(500, len(X_test_sw)), random_state=7)
-            X_trans_sw  = preprocessor_sw.transform(X_sample_sw)
-            import pandas as _pd
-            X_df_sw = _pd.DataFrame(X_trans_sw, columns=feature_names_sw)
+                # Transform a sample of test data
+                X_sample_sw = X_test_sw.sample(min(500, len(X_test_sw)), random_state=7)
+                X_trans_sw  = preprocessor_sw.transform(X_sample_sw)
+                import pandas as _pd
+                X_df_sw = _pd.DataFrame(X_trans_sw, columns=feature_names_sw)
 
-            # Compute SHAP values
-            shap_vals_sw = explainer_sw.shap_values(X_df_sw)
-            if isinstance(shap_vals_sw, list):
-                shap_vals_sw = shap_vals_sw[1]
+                # Compute SHAP values
+                shap_vals_sw = explainer_sw.shap_values(X_df_sw)
+                if isinstance(shap_vals_sw, list):
+                    shap_vals_sw = shap_vals_sw[1]
 
-            # Filter to top_n features (from the left-column slider)
-            slider_val = st.session_state.get("p_shap_slider", 12)
-            mean_abs   = abs(shap_vals_sw).mean(axis=0)
-            top_idx    = mean_abs.argsort()[::-1][:slider_val]
-            shap_top   = shap_vals_sw[:, top_idx]
-            X_top      = X_df_sw.iloc[:, top_idx]
+                # Filter to top_n features from the dropdown selection
+                slider_val = int(top_n)
+                mean_abs   = abs(shap_vals_sw).mean(axis=0)
+                top_idx    = mean_abs.argsort()[::-1][:slider_val]
+                shap_top   = shap_vals_sw[:, top_idx]
+                X_top      = X_df_sw.iloc[:, top_idx]
 
-            # Plot with matplotlib — themed
-            matplotlib.rcParams.update({
-                "text.color":   text_color,
-                "axes.labelcolor": text_color,
-                "xtick.color":  text_color,
-                "ytick.color":  text_color,
-                "axes.facecolor": bg_color,
-                "figure.facecolor": bg_color,
-            })
+                # Plot with matplotlib — themed
+                matplotlib.rcParams.update({
+                    "text.color":   text_color,
+                    "axes.labelcolor": text_color,
+                    "xtick.color":  text_color,
+                    "ytick.color":  text_color,
+                    "axes.facecolor": bg_color,
+                    "figure.facecolor": bg_color,
+                })
 
-            fig_bee, ax_bee = plt.subplots(figsize=(7, max(4, slider_val * 0.42)))
-            fig_bee.patch.set_facecolor(bg_color)
-            ax_bee.set_facecolor(bg_color)
+                fig_bee, ax_bee = plt.subplots(figsize=(7, max(4, slider_val * 0.42)))
+                fig_bee.patch.set_facecolor(bg_color)
+                ax_bee.set_facecolor(bg_color)
 
-            shap.summary_plot(
-                shap_top,
-                X_top,
-                plot_type="dot",
-                show=False,
-                color_bar=True,
-                plot_size=None,
-                max_display=slider_val,
-            )
+                shap.summary_plot(
+                    shap_top,
+                    X_top,
+                    plot_type="dot",
+                    show=False,
+                    color_bar=True,
+                    plot_size=None,
+                    max_display=slider_val,
+                )
 
-            # Re-theme all text elements after shap draws them
-            for item in ([ax_bee.title, ax_bee.xaxis.label, ax_bee.yaxis.label] +
-                         ax_bee.get_xticklabels() + ax_bee.get_yticklabels()):
-                item.set_color(text_color)
-            ax_bee.tick_params(colors=text_color)
-            ax_bee.spines["bottom"].set_color(grid_color)
-            ax_bee.spines["left"].set_color(grid_color)
-            ax_bee.spines["top"].set_visible(False)
-            ax_bee.spines["right"].set_visible(False)
-            ax_bee.axvline(0, color=grid_color, linewidth=0.8, linestyle="--")
+                # Re-theme all text elements after shap draws them
+                for item in ([ax_bee.title, ax_bee.xaxis.label, ax_bee.yaxis.label] +
+                             ax_bee.get_xticklabels() + ax_bee.get_yticklabels()):
+                    item.set_color(text_color)
+                ax_bee.tick_params(colors=text_color)
+                ax_bee.spines["bottom"].set_color(grid_color)
+                ax_bee.spines["left"].set_color(grid_color)
+                ax_bee.spines["top"].set_visible(False)
+                ax_bee.spines["right"].set_visible(False)
+                ax_bee.axvline(0, color=grid_color, linewidth=0.8, linestyle="--")
 
-            # Colorbar theming
-            for cb_ax in fig_bee.axes[1:]:
-                cb_ax.set_facecolor(bg_color)
-                cb_ax.tick_params(colors=text_color)
-                cb_ax.yaxis.label.set_color(text_color)
+                # Colorbar theming
+                for cb_ax in fig_bee.axes[1:]:
+                    cb_ax.set_facecolor(bg_color)
+                    cb_ax.tick_params(colors=text_color)
+                    cb_ax.yaxis.label.set_color(text_color)
 
-            plt.tight_layout(pad=1.2)
-            st.pyplot(fig_bee, use_container_width=True)
-            plt.close(fig_bee)
+                plt.tight_layout(pad=1.2)
+                st.pyplot(fig_bee, use_container_width=True)
+                plt.close(fig_bee)
 
-        except Exception as _e:
-            # Graceful fallback to static PNG if live generation fails
-            beeswarm_path = os.path.join(FIGURES_DIR, "shap_summary_beeswarm.png")
-            if os.path.exists(beeswarm_path):
-                st.image(beeswarm_path, use_container_width=True)
-                st.caption(f"⚠️ Live render failed ({_e}) — showing cached plot.")
-            else:
-                st.info(f"Could not generate beeswarm: {_e}")
+            except Exception as _e:
+                # Graceful fallback to static PNG if live generation fails
+                beeswarm_path = os.path.join(FIGURES_DIR, "shap_summary_beeswarm.png")
+                if os.path.exists(beeswarm_path):
+                    st.image(beeswarm_path, use_container_width=True)
+                    st.caption(f"⚠️ Live render failed ({_e}) — showing cached plot.")
+                else:
+                    st.info(f"Could not generate beeswarm: {_e}")
 
     st.markdown("<div style='height:1.25rem;'></div>", unsafe_allow_html=True)
     p1, p2 = st.columns(2)
@@ -2015,16 +2081,58 @@ elif nav_selection == "What-If Simulator":
     </div>
     """, unsafe_allow_html=True)
 
+    # ── If no prior Risk Calculator run, show standalone input form ──
     if st.session_state.get("last_inputs") is None:
-        base_vals = {
-            "credit_score": 650, "geography": "France", "gender": "Female",
-            "age": 42, "tenure": 5, "balance": 75000.0, "num_products": 1,
-            "has_cr_card": 1, "is_active": 0, "salary": 85000.0,
-        }
-    else:
-        base_vals = st.session_state["last_inputs"]
+        st.markdown('<div class="precision-card-header">👤 Define Customer Profile for Simulation</div>', unsafe_allow_html=True)
+        st.caption("No profile loaded from Risk Calculator. Enter customer details directly below to begin simulation.")
 
-    base_df = prepare_customer_input(**base_vals)
+        si1, si2, si3 = st.columns(3)
+        with si1:
+            sim_credit  = st.number_input("Credit Score", min_value=300, max_value=850, value=650, step=1, key="sim_cs_direct")
+            sim_geo     = st.selectbox("Geography", ["France", "Germany", "Spain"], index=None, placeholder="Select Country...", key="sim_geo_direct")
+            sim_gender  = st.selectbox("Gender", ["Female", "Male"], index=None, placeholder="Select Gender...", key="sim_gen_direct")
+        with si2:
+            sim_age     = st.number_input("Age", min_value=18, max_value=92, value=35, step=1, key="sim_age_direct")
+            sim_tenure  = st.number_input("Tenure (years)", min_value=0, max_value=10, value=3, step=1, key="sim_ten_direct")
+            sim_balance = st.number_input("Account Balance (€)", min_value=0.0, max_value=250000.0, value=0.0, step=1000.0, key="sim_bal_direct")
+        with si3:
+            sim_prods   = st.selectbox("Num. Products", [1, 2, 3, 4], index=None, placeholder="Select...", key="sim_prod_direct")
+            sim_card    = st.selectbox("Has Credit Card?", [1, 0], index=None, placeholder="Select...", format_func=lambda x: "Yes" if x == 1 else "No", key="sim_card_direct")
+            sim_active  = st.selectbox("Active Member?", [1, 0], index=None, placeholder="Select...", format_func=lambda x: "Active" if x == 1 else "Inactive", key="sim_act_direct")
+            sim_salary  = st.number_input("Est. Annual Salary (€)", min_value=0.0, max_value=500000.0, value=50000.0, step=1000.0, key="sim_sal_direct")
+
+        # Validate required fields
+        _missing = [f for f, v in [("Geography", sim_geo), ("Gender", sim_gender), ("Num. Products", sim_prods), ("Credit Card", sim_card), ("Active Member", sim_active)] if v is None]
+        if _missing:
+            st.warning(f"⚠️ Please select: {', '.join(_missing)} to run the simulation.")
+            st.stop()
+
+        # Build base_vals from standalone inputs
+        base_vals = {
+            "credit_score": int(sim_credit),
+            "geography":    str(sim_geo),
+            "gender":       str(sim_gender),
+            "age":          int(sim_age),
+            "tenure":       int(sim_tenure),
+            "balance":      float(sim_balance),
+            "num_products": int(sim_prods),
+            "has_cr_card":  int(sim_card),
+            "is_active":    int(sim_active),
+            "salary":       float(sim_salary),
+        }
+        st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
+    base_df = prepare_customer_input(
+        credit_score=int(base_vals["credit_score"]),
+        geography=str(base_vals["geography"]),
+        gender=str(base_vals["gender"]),
+        age=int(base_vals["age"]),
+        tenure=int(base_vals["tenure"]),
+        balance=float(base_vals["balance"]),
+        num_products=int(base_vals["num_products"]),
+        has_cr_card=int(base_vals["has_cr_card"]),
+        is_active=int(base_vals["is_active"]),
+        salary=float(base_vals["salary"]),
+    )
     base_result = predict_single(base_df, pipeline, threshold)
     base_prob = base_result["probability"]
 
@@ -2116,75 +2224,88 @@ elif nav_selection == "What-If Simulator":
     sweep_feature = st.selectbox(
         "Parametric Sweep Attribute:",
         ["IsActiveMember", "NumOfProducts", "Balance", "Tenure", "Age", "CreditScore"],
+        index=None,
+        placeholder="Select Parametric Sweep Attribute...",
         key="p_sweep_select",
     )
 
-    if sweep_feature == "IsActiveMember":
-        sweep_vals = [0, 1]
-        sweep_labels = ["Inactive (0)", "Active (1)"]
-    elif sweep_feature == "NumOfProducts":
-        sweep_vals = [1, 2, 3, 4]
-        sweep_labels = ["1 Product", "2 Products", "3 Products", "4 Products"]
-    elif sweep_feature == "Balance":
-        sweep_vals = list(range(0, 210000, 10000))
-        sweep_labels = [f"€{v:,}" for v in sweep_vals]
-    elif sweep_feature == "Tenure":
-        sweep_vals = list(range(0, 11))
-        sweep_labels = [f"{v} yrs" for v in sweep_vals]
-    elif sweep_feature == "Age":
-        sweep_vals = list(range(18, 93, 2))
-        sweep_labels = [str(v) for v in sweep_vals]
+    if sweep_feature is None:
+        st.markdown(f"""
+        <div class="precision-card" style="text-align:center; padding:2rem 1rem;">
+            <div style="font-size:1.8rem; margin-bottom:0.5rem;">📈</div>
+            <div style="font-size:0.95rem; font-weight:700; color:var(--on-surface);">No Parametric Sweep Attribute Selected</div>
+            <div style="font-size:0.82rem; color:var(--on-surface-variant); max-width:320px; margin:0.4rem auto 0 auto;">
+                Select an attribute from the dropdown above to plot the simulated sensitivity curve.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     else:
-        sweep_vals = list(range(300, 860, 20))
-        sweep_labels = [str(v) for v in sweep_vals]
-
-    probs = []
-    for sv in sweep_vals:
-        sv_vals = {**mod_vals}
         if sweep_feature == "IsActiveMember":
-            sv_vals["is_active"] = sv
+            sweep_vals = [0, 1]
+            sweep_labels = ["Inactive (0)", "Active (1)"]
         elif sweep_feature == "NumOfProducts":
-            sv_vals["num_products"] = sv
+            sweep_vals = [1, 2, 3, 4]
+            sweep_labels = ["1 Product", "2 Products", "3 Products", "4 Products"]
         elif sweep_feature == "Balance":
-            sv_vals["balance"] = float(sv)
+            sweep_vals = list(range(0, 210000, 10000))
+            sweep_labels = [f"€{v:,}" for v in sweep_vals]
         elif sweep_feature == "Tenure":
-            sv_vals["tenure"] = sv
+            sweep_vals = list(range(0, 11))
+            sweep_labels = [f"{v} yrs" for v in sweep_vals]
         elif sweep_feature == "Age":
-            sv_vals["age"] = sv
+            sweep_vals = list(range(18, 93, 2))
+            sweep_labels = [str(v) for v in sweep_vals]
         else:
-            sv_vals["credit_score"] = sv
-        sdf = prepare_customer_input(**sv_vals)
-        probs.append(predict_single(sdf, pipeline, threshold)["probability"])
+            sweep_vals = list(range(300, 860, 20))
+            sweep_labels = [str(v) for v in sweep_vals]
 
-    fig_sw = go.Figure()
-    fig_sw.add_trace(go.Scatter(
-        x=sweep_labels, y=probs, mode="lines+markers",
-        line=dict(color=TOKENS["primary"], width=3),
-        marker=dict(size=8, color=probs, colorscale=[[0, TOKENS["tertiary"]], [0.5, TOKENS["med_risk_fg"]], [1, TOKENS["error"]]]),
-    ))
-    fig_sw.add_hline(
-        y=threshold, line_dash="dash", line_color=TOKENS["primary"], line_width=2.5,
-        annotation_text=f"<b>Decision Cut-off ({threshold:.2f})</b>",
-        annotation_position="top left",
-        annotation_font=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
-        annotation_bgcolor=TOKENS["surface_container"],
-        annotation_bordercolor=TOKENS["outline"],
-        annotation_borderpad=5,
-    )
-    fig_sw.update_layout(
-        title=f"<b>Sensitivity Curve: Impact of {sweep_feature} on Predicted Churn Risk</b>",
-        margin=dict(l=35, r=35, t=55, b=35),
-        xaxis=dict(
-            title=dict(text=sweep_feature, font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
-            tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"])
-        ),
-        yaxis=dict(
-            title=dict(text="Estimated Churn Probability", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
-            tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
-            range=[0, 1.05]
-        ),
-    )
-    render_precision_chart(fig_sw, height=360)
+        probs = []
+        for sv in sweep_vals:
+            sv_vals = {**mod_vals}
+            if sweep_feature == "IsActiveMember":
+                sv_vals["is_active"] = sv
+            elif sweep_feature == "NumOfProducts":
+                sv_vals["num_products"] = sv
+            elif sweep_feature == "Balance":
+                sv_vals["balance"] = float(sv)
+            elif sweep_feature == "Tenure":
+                sv_vals["tenure"] = sv
+            elif sweep_feature == "Age":
+                sv_vals["age"] = sv
+            else:
+                sv_vals["credit_score"] = sv
+            sdf = prepare_customer_input(**sv_vals)
+            probs.append(predict_single(sdf, pipeline, threshold)["probability"])
+
+        fig_sw = go.Figure()
+        fig_sw.add_trace(go.Scatter(
+            x=sweep_labels, y=probs, mode="lines+markers",
+            line=dict(color=TOKENS["primary"], width=3),
+            marker=dict(size=8, color=probs, colorscale=[[0, TOKENS["tertiary"]], [0.5, TOKENS["med_risk_fg"]], [1, TOKENS["error"]]]),
+        ))
+        fig_sw.add_hline(
+            y=threshold, line_dash="dash", line_color=TOKENS["primary"], line_width=2.5,
+            annotation_text=f"<b>Decision Cut-off ({threshold:.2f})</b>",
+            annotation_position="top left",
+            annotation_font=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
+            annotation_bgcolor=TOKENS["surface_container"],
+            annotation_bordercolor=TOKENS["outline"],
+            annotation_borderpad=5,
+        )
+        fig_sw.update_layout(
+            title=f"<b>Sensitivity Curve: Impact of {sweep_feature} on Predicted Churn Risk</b>",
+            margin=dict(l=35, r=35, t=55, b=35),
+            xaxis=dict(
+                title=dict(text=sweep_feature, font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
+                tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"])
+            ),
+            yaxis=dict(
+                title=dict(text="Estimated Churn Probability", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
+                tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
+                range=[0, 1.05]
+            ),
+        )
+        render_precision_chart(fig_sw, height=360)
 
 
 # ══════════════════════════════════════════════

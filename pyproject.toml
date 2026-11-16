@@ -1,0 +1,6 @@
+[tool.pyrefly]
+preset = "off"
+search-path = [
+    "src",
+    "app",
+]
