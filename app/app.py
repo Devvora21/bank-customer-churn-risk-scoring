@@ -766,42 +766,75 @@ span[data-baseweb="tag"] svg {{
     opacity: 0.8 !important;
 }}
 
-/* Text Input & Number Input fields */
+/* ═══════════════════════════════════════════════════
+   TEXT INPUT / NUMBER INPUT — Full Visibility Fix
+   Forces correct text + background on ALL Streamlit
+   input widgets regardless of BaseWeb inline styles
+   ═══════════════════════════════════════════════════ */
+
+/* Outer wrapper */
 div[data-baseweb="input"] {{
-    background-color: var(--surface-low) !important;
+    background-color: {TOKENS["surface_container_low"]} !important;
     border-radius: 8px !important;
 }}
 
+/* Inner border wrapper */
 div[data-baseweb="input"] > div {{
-    background-color: var(--surface-low) !important;
-    border: 1px solid var(--outline-variant) !important;
+    background-color: {TOKENS["surface_container_low"]} !important;
+    border: 1.5px solid {TOKENS["outline_variant"]} !important;
     border-radius: 8px !important;
+    min-height: 2.6rem !important;
 }}
 
-input, select, textarea {{
-    color: var(--on-surface) !important;
-    -webkit-text-fill-color: var(--on-surface) !important;
-    background-color: transparent !important;
-    font-weight: 600 !important;
-    font-size: 0.92rem !important;
-}}
-
-/* Number input spin buttons & inner value */
+/* The actual <input> element — highest specificity fix */
+div[data-baseweb="input"] input,
+div[data-baseweb="input"] input:focus,
+div[data-baseweb="input"] input:active,
+div[data-baseweb="input"] input:hover,
 [data-testid="stNumberInput"] input,
-[data-testid="stNumberInputField"] input,
-div[data-baseweb="input"] input {{
-    color: var(--on-surface) !important;
-    -webkit-text-fill-color: var(--on-surface) !important;
+[data-testid="stNumberInput"] input:focus,
+.stNumberInput input,
+.stTextInput input,
+input[class*="st-"],
+input[type="number"],
+input[type="text"] {{
+    color: {TOKENS["on_surface"]} !important;
+    -webkit-text-fill-color: {TOKENS["on_surface"]} !important;
+    background-color: transparent !important;
+    background: transparent !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 0.92rem !important;
+    caret-color: {TOKENS["on_surface"]} !important;
+    opacity: 1 !important;
+}}
+
+/* Placeholder text */
+div[data-baseweb="input"] input::placeholder,
+[data-testid="stNumberInput"] input::placeholder,
+input[type="number"]::placeholder,
+input[type="text"]::placeholder {{
+    color: {TOKENS["on_surface_variant"]} !important;
+    -webkit-text-fill-color: {TOKENS["on_surface_variant"]} !important;
+    opacity: 0.75 !important;
+}}
+
+/* Number input +/- step buttons */
+[data-testid="stNumberInput"] button,
+[data-testid="stNumberInput"] button svg,
+[data-testid="stNumberInput"] button svg path {{
+    color: {TOKENS["on_surface"]} !important;
+    fill: {TOKENS["on_surface"]} !important;
+    background-color: {TOKENS["surface_container_high"]} !important;
+}}
+
+/* Search / text input general */
+input, textarea {{
+    color: {TOKENS["on_surface"]} !important;
+    -webkit-text-fill-color: {TOKENS["on_surface"]} !important;
     background-color: transparent !important;
     font-weight: 600 !important;
     font-size: 0.92rem !important;
-    caret-color: var(--on-surface) !important;
-}}
-
-input::placeholder, textarea::placeholder {{
-    color: var(--on-surface-variant) !important;
-    -webkit-text-fill-color: var(--on-surface-variant) !important;
-    opacity: 0.75 !important;
 }}
 
 /* Radio button options */
@@ -2480,3 +2513,4 @@ st.markdown(f"""
     Inference Engine: {best_model_name} (Threshold: {threshold:.2f}) &nbsp;•&nbsp; Powered by XGBoost, Scikit-Learn & SHAP
 </div>
 """, unsafe_allow_html=True)
+
