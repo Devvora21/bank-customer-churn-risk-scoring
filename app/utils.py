@@ -14,7 +14,6 @@ import warnings
 import numpy as np
 import pandas as pd
 import joblib
-import shap
 import streamlit as st
 
 warnings.filterwarnings("ignore")
@@ -194,9 +193,11 @@ def get_shap_explainer(_pipeline, _X_background: pd.DataFrame):
     X_df = pd.DataFrame(X_transformed, columns=feature_names)
 
     try:
+        import shap
         explainer = shap.TreeExplainer(classifier)
         return explainer, feature_names, preprocessor
     except Exception:
+        import shap
         background = shap.kmeans(X_df, 50)
         explainer = shap.KernelExplainer(
             lambda x: classifier.predict_proba(x)[:, 1],

@@ -26,10 +26,22 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-import shap
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
+# SHAP is lazy-loaded (import takes ~18s due to numba/llvmlite JIT)
+# Only imported when user navigates to Feature Importance or needs SHAP explanations
+shap = None
+
+def _ensure_shap():
+    """Lazy-load shap on first use to speed up app startup."""
+    global shap
+    if shap is None:
+        with st.spinner("Loading SHAP explainability engine (first time only)..."):
+            import shap as _shap
+            shap = _shap
+    return shap
 
 warnings.filterwarnings("ignore")
 
@@ -2043,6 +2055,7 @@ elif nav_selection == "Feature Importance":
                 fig_bee.patch.set_facecolor(bg_color)
                 ax_bee.set_facecolor(bg_color)
 
+                _ensure_shap()
                 shap.summary_plot(
                     shap_top,
                     X_top,
