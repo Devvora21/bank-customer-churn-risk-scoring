@@ -1,273 +1,391 @@
-# Predictive Modeling and Risk Scoring for Bank Customer Churn
-## Research Paper
+# Customer Segmentation & Churn Pattern Analytics in European Banking
 
----
-
-**Authors:** Data Science Team  
-**Date:** October 2026  
-**Institution:** Unifield Mentor Analytics  
-**Dataset:** European Bank Customer Dataset (N = 10,001)
+## A Data-Driven Approach to Understanding and Mitigating Customer Attrition
 
 ---
 
 ## Abstract
 
-Customer churn in retail banking represents a significant loss of Customer Lifetime Value (CLV), cross-sell revenue, and deposit base stability. This paper presents a complete predictive churn intelligence system built on a European bank dataset of 10,001 customers. We evaluate five model families — Logistic Regression, Decision Tree, Random Forest, Gradient Boosting, and XGBoost — with stratified cross-validation, class-imbalance handling (SMOTE + class weighting), and hyperparameter tuning. The best-performing model achieves a ROC-AUC exceeding 0.87 on the held-out test set. We apply SHAP explainability to identify and quantify the top churn drivers, perform a business-cost threshold optimisation, and present a fairness analysis across geographic and gender subgroups. A production-ready Streamlit dashboard enables real-time individual risk assessment, scenario simulation, and global explainability exploration. Our findings indicate that customer engagement (active membership), product portfolio breadth, age cohort, account balance, and geography are the primary levers for churn prevention.
+Customer churn is a persistent challenge in the European banking sector, directly eroding revenue, increasing acquisition costs, and undermining long-term profitability. This study presents an exploratory data analysis (EDA) of 10,000 European bank customer records spanning three key markets — France, Germany, and Spain — to identify the demographic, financial, and behavioral factors most strongly associated with customer attrition. Through systematic data cleaning, feature engineering, and multi-dimensional segmentation, we find an overall churn rate of **20.37%**, with significant variation across customer segments. Germany exhibits a churn rate of **32.44%** — roughly double that of France (16.15%) and Spain (16.67%). Female customers churn at **25.07%** compared to **16.46%** for males. The 45–60 age group shows a strikingly high churn rate of **51.12%**, more than three times that of customers under 30. Customers with non-zero account balances churn at **24.08%** versus **13.82%** for zero-balance accounts, suggesting that high-value customers are disproportionately at risk. These findings are operationalized through an interactive Streamlit dashboard that enables real-time filtering, KPI monitoring, and data export — providing bank stakeholders with a practical tool for targeted retention strategy development.
 
-**Keywords:** customer churn, XGBoost, SHAP explainability, class imbalance, ROC-AUC, retail banking, risk scoring
+**Keywords:** Customer Churn, European Banking, Customer Segmentation, Exploratory Data Analysis, Streamlit, Data Visualization
 
 ---
 
 ## 1. Introduction
 
-Retail banks face continuous pressure from fintech disruptors, challenger banks, and evolving consumer expectations. Customer churn — the voluntary departure of a customer — leads to direct revenue loss and imposes acquisition costs that are estimated to be five to seven times higher than retention costs (Reichheld & Sasser, 1990). Traditional churn analysis is inherently retrospective: it explains *why* customers left after the fact. This project builds a **proactive churn intelligence system** that:
+### 1.1 Background
 
-1. Assigns a churn probability score (0–1) to each customer *before* they leave
-2. Classifies customers into Low / Medium / High risk tiers for prioritised retention campaigns
-3. Provides SHAP-based individual explanations that satisfy both business and regulatory requirements for model transparency
+The European banking industry operates in an increasingly competitive landscape shaped by fintech disruption, regulatory evolution (e.g., PSD2, Open Banking), and shifting customer expectations. In this environment, customer retention has become a strategic imperative. Industry research consistently shows that acquiring a new customer costs five to seven times more than retaining an existing one (Reichheld & Sasser, 1990), making churn reduction one of the highest-ROI activities available to financial institutions.
 
-The system is designed for European retail banking context, with specific attention to GDPR-aligned explainability and ECB supervisory expectations for algorithmic fairness.
+Customer churn — defined as the discontinuation of a customer's relationship with a bank — can stem from a variety of factors: dissatisfaction with service quality, better offers from competitors, life-stage transitions, or lack of engagement with banking products. Understanding *which* customers churn and *why* is essential for designing effective, cost-efficient retention interventions.
 
----
+### 1.2 Problem Statement
 
-## 2. Literature Review and Business Background
+Despite the strategic importance of churn reduction, many banks still rely on reactive approaches — responding to churn after it occurs rather than proactively identifying at-risk customers. This project addresses this gap by performing a comprehensive, data-driven analysis of churn patterns across multiple customer dimensions to answer the following research questions:
 
-### 2.1 Churn Prediction in Banking
+1. **What is the overall churn rate, and how does it vary across geographies?**
+2. **Which demographic segments (age, gender) exhibit the highest churn propensity?**
+3. **How do financial characteristics (credit score, account balance, tenure) correlate with churn?**
+4. **Can customer segmentation reveal actionable patterns for targeted retention?**
 
-Machine learning has been applied to bank churn prediction since the early 2000s. Seminal work by Hadden et al. (2007) established the superiority of ensemble methods over logistic regression for customer attrition modelling. More recent literature (Alboukaey et al., 2020; Lalwani et al., 2022) has demonstrated that gradient boosting methods consistently outperform other paradigms on structured tabular banking data, achieving ROC-AUC scores in the 0.85–0.93 range.
+### 1.3 Objectives
 
-### 2.2 Class Imbalance
-
-Bank churn datasets are inherently imbalanced: typically 15–25% of customers churn annually. Standard accuracy metrics are misleading in this context. We follow best practices by:
-- Reporting ROC-AUC as the primary evaluation metric (insensitive to class imbalance)
-- Using SMOTE (Chawla et al., 2002) applied strictly inside training folds to prevent data leakage
-- Applying `class_weight="balanced"` for linear models and `scale_pos_weight` for XGBoost
-
-### 2.3 Explainability and Regulatory Context
-
-The European Central Bank's 2022 guidance on AI and ML model risk management explicitly requires that models used in customer-facing decisions be explainable and auditable. SHAP (Lundberg & Lee, 2017) provides theoretically grounded, additive feature attributions that satisfy these requirements. Partial Dependence Plots (Friedman, 2001) provide complementary global interpretability.
+- Clean and validate a dataset of 10,000 European banking customers
+- Engineer meaningful customer segments from raw features
+- Quantify churn rates across all segments
+- Build interactive visualizations and a real-time dashboard for stakeholder use
+- Derive actionable recommendations for churn mitigation
 
 ---
 
-## 3. Data Description
+## 2. Literature Review
 
-### 3.1 Dataset Overview
+### 2.1 Customer Churn in Banking
 
-| Property | Value |
-|---|---|
-| Source | European Bank Customer Dataset |
-| File | European_Bank.csv |
-| Rows | 10,001 |
-| Features (raw) | 14 columns |
-| Target | Exited (0 = Retained, 1 = Churned) |
-| Class distribution | ~20.4% churned, ~79.6% retained |
+Customer churn in the banking sector has been widely studied across both academic and industry research. Keramati et al. (2014) identified customer demographics, transaction behavior, and service usage patterns as primary churn predictors in telecommunications — findings that are directly analogous to banking. In the banking context, Xie et al. (2009) demonstrated that customer satisfaction, number of products held, and account tenure significantly influence retention.
 
-### 3.2 Feature Descriptions
+### 2.2 Customer Segmentation Approaches
 
-| Feature | Type | Description |
-|---|---|---|
-| CreditScore | Numeric | Customer credit score (300–850) |
-| Geography | Categorical | Country: France, Germany, Spain |
-| Gender | Categorical | Female / Male |
-| Age | Numeric | Customer age (18–92) |
-| Tenure | Numeric | Years as bank customer (0–10) |
-| Balance | Numeric | Account balance (€) |
-| NumOfProducts | Numeric | Number of bank products held (1–4) |
-| HasCrCard | Binary | Has credit card (0/1) |
-| IsActiveMember | Binary | Actively uses account (0/1) |
-| EstimatedSalary | Numeric | Annual salary estimate (€) |
-| Exited | Binary | **TARGET**: Churned (1) or Retained (0) |
+Customer segmentation — the practice of dividing a customer base into groups with shared characteristics — is a foundational technique in customer analytics. Common segmentation bases include:
 
-Columns dropped: `Year` (constant = 2025), `CustomerId` (identifier), `Surname` (identifier).
+- **Demographic segmentation:** Age, gender, geography
+- **Behavioral segmentation:** Product usage, transaction frequency, tenure
+- **Value-based segmentation:** Account balance, estimated income, profitability
 
-### 3.3 Data Quality Assessment
+RFM (Recency, Frequency, Monetary) analysis and clustering techniques (K-Means, DBSCAN) are frequently applied in the literature. This study employs rule-based segmentation using domain-informed bin boundaries, which offers the advantages of interpretability and direct business applicability.
 
-- **Missing values:** None detected across all 10,001 rows
-- **Duplicates:** 0 exact duplicate rows
-- **Outliers:** CreditScore has no values below 300 or above 850 (valid range). Balance has approximately 3,617 customers with exactly zero balance — a legitimate business state (not missing data). Age range 18–92 is plausible.
-- **Data types:** All columns in correct dtype post-loading
+### 2.3 Exploratory Data Analysis as a Decision Tool
+
+While machine learning models (Logistic Regression, Random Forest, Gradient Boosting) dominate the predictive churn literature, exploratory data analysis remains a critical first step. Tukey (1977) established EDA as a disciplined approach to data investigation that reveals structure, extracts important variables, and detects anomalies. For bank management audiences, well-designed EDA with clear visualizations can often drive faster decision-making than complex model outputs.
 
 ---
 
-## 4. Exploratory Data Analysis
+## 3. Methodology
 
-### 4.1 Target Distribution
+### 3.1 Data Collection
 
-The dataset exhibits moderate class imbalance with an overall churn rate of approximately 20.4%. This requires careful handling during modelling to prevent the classifier from simply predicting the majority class.
+The dataset comprises **10,000 records** of European bank customers from the year **2025**, with **14 original features** covering customer demographics, financial status, product engagement, and churn outcome. The data spans three geographic markets: France, Germany, and Spain.
 
-### 4.2 Key EDA Findings
+### 3.2 Data Exploration & Validation
 
-**Geography:**
-Germany exhibits a churn rate of approximately 32%, compared to 16% for France and 17% for Spain. This geographic disparity (approximately 2× higher risk in Germany) is one of the most striking findings in the dataset and is a primary retention focus area.
+The following validation steps were performed:
 
-**Gender:**
-Female customers churn at approximately 25%, compared to approximately 16% for male customers. This 9-percentage-point gap warrants careful consideration: gender should not be used as a sole decision variable in customer interventions (regulatory constraint), but the underlying behavioural differences should be investigated.
+| Check | Result |
+|-------|--------|
+| Shape | 10,000 rows × 14 columns |
+| Missing values | 0 across all columns |
+| Data types | Correct (int64, float64, string) |
+| Zero/negative values | Found in `Tenure` (413), `Balance` (3,617), `HasCrCard` (2,945), `IsActiveMember` (4,849), `Exited` (7,963) |
 
-**Number of Products:**
-Customers with 1 product: ~28% churn rate. Customers with 2 products: ~8% churn rate. Customers with 3 products: ~83% churn rate (anomalous spike — possible mis-selling or fee fatigue). Customers with 4 products: ~100% churn rate (nearly all churned).
+**Key decisions:**
+- Zero values in binary columns (`HasCrCard`, `IsActiveMember`, `Exited`) are legitimate and were retained
+- Zero balance is a valid financial state and was retained as a distinct segment (`BalanceSegment = "Zero"`)
+- Zero/negative values in `CreditScore`, `Age`, and `EstimatedSalary` were replaced with the median of positive values
 
-**Active Membership:**
-Inactive members churn at ~27%, active members at ~14%. This is the most actionable lever: engagement programmes can directly move customers from the inactive to active category.
+### 3.3 Data Cleaning
 
-**Age:**
-Churn peaks in the 45–60 age band (~30% churn rate), with younger (<30) and older (>65) customers showing lower churn rates. Middle-aged customers may be reassessing their financial relationships.
+```python
+# Median imputation for invalid values
+cols_to_fix = ['CreditScore', 'Age', 'EstimatedSalary']
+for col in cols_to_fix:
+    median_val = df[df[col] > 0][col].median()
+    df[col] = df[col].apply(lambda x: median_val if x <= 0 else x)
 
-**Balance:**
-Zero-balance customers and very high-balance customers both show elevated churn. The pattern is non-monotonic, making this an important feature for tree-based models.
+# Drop non-analytical columns
+df.drop(columns=['Surname', 'CustomerId'], inplace=True)
+```
 
-### 4.3 Correlation Analysis
+**Imputed medians:**
+| Column | Median Value |
+|--------|-------------|
+| CreditScore | 652.0 |
+| Age | 37.0 |
+| EstimatedSalary | 100,193.92 |
 
-The correlation heatmap reveals moderate positive correlations between: Age and Exited (r ≈ 0.29), Balance and Exited (r ≈ 0.12). NumOfProducts shows a negative linear correlation with Exited (r ≈ −0.05) which masks the non-linear U-shape observed in the segment analysis. IsActiveMember has a negative correlation with Exited (r ≈ −0.16), confirming that active members are less likely to churn.
+### 3.4 Feature Engineering
 
----
+Four new categorical features were engineered to enable segment-level analysis:
 
-## 5. Feature Engineering
+| Feature | Bins | Labels |
+|---------|------|--------|
+| `AgeGroup` | 0–30, 30–45, 45–60, 60–100 | `<30`, `30-45`, `45-60`, `60+` |
+| `CreditBand` | 0–580, 580–670, 670–850 | `Low`, `Medium`, `High` |
+| `BalanceSegment` | 0, >0 | `Zero`, `High` |
+| `TenureGroup` | -1–2, 2–5, 5–10 | `New`, `MidTerm`, `LongTerm` |
 
-Seven engineered features were created, motivated by behavioural and relationship-strength theory:
+### 3.5 Analysis Framework
 
-| Feature | Formula | Rationale |
-|---|---|---|
-| Balance_to_Salary | Balance / (Salary + 1e-6) | Relative wealth concentration in the bank |
-| Products_per_Tenure | NumProducts / (Tenure + 1) | Product adoption pace |
-| Active_Products | IsActive × NumProducts | Compound engagement × utilisation |
-| Age_Tenure_Interaction | Age × Tenure | Loyalty-age compound signal |
-| Tenure_Age_Ratio | Tenure / (Age + 1) | Proportion of adult life with bank |
-| Zero_Balance_Flag | 1 if Balance == 0 | Explicit zero-balance indicator |
-| Age_Band | Categorical bins | EDA segmentation (not fed to models) |
+Churn rate was computed for each segment using:
 
-All engineered features were validated through ablation (adding one feature at a time) and confirmed to improve or maintain ROC-AUC relative to the baseline feature set.
+```
+Churn Rate (%) = (Number of Churned Customers in Segment / Total Customers in Segment) × 100
+```
 
----
+All analysis was performed using **Python 3.x** with **Pandas** for data manipulation and **Plotly Express** for interactive visualization. The interactive dashboard was built using **Streamlit**.
 
-## 6. Methodology
+### 3.6 Tools & Technologies
 
-### 6.1 Train-Test Split
-
-- Stratified 80/20 split (random_state=42) preserving the 20.4% churn ratio
-- Training set: 8,000 customers | Test set: 2,001 customers
-- Training churn rate: 20.4% | Test churn rate: 20.4% (stratification confirmed)
-
-### 6.2 Cross-Validation
-
-Stratified 5-fold cross-validation applied on the training set for all hyperparameter searches. SMOTE applied exclusively inside training folds (via imblearn Pipeline) to prevent data leakage into validation folds.
-
-### 6.3 Model Families
-
-Five model families evaluated:
-1. **Logistic Regression** — interpretability benchmark; uses StandardScaler, class_weight="balanced"
-2. **Decision Tree** — transparent rule-based baseline; class_weight="balanced"
-3. **Random Forest** — ensemble baseline; class_weight="balanced"
-4. **Gradient Boosting** — sklearn GBM with SMOTE inside pipeline
-5. **XGBoost** — primary candidate; scale_pos_weight for imbalance handling
-
-### 6.4 Hyperparameter Tuning
-
-RandomizedSearchCV (30 iterations, scoring=roc_auc, 5-fold stratified CV) applied to all models. Total search space spans thousands of configurations per model.
-
----
-
-## 7. Model Results and Comparison
-
-> **Note:** The following table reflects actual results from the training run. All metrics are on the held-out test set (n = 2,001) at the business-optimised threshold.
-
-| Model | Accuracy | Precision | Recall | F1-Score | ROC-AUC (Test) | ROC-AUC CV (Mean ± Std) |
-|---|---|---|---|---|---|---|
-| *See data/processed/model_comparison_full.csv for actual values* | | | | | | |
-
-**Best Model Selection:** XGBoost was selected as the best model based on its superior ROC-AUC, which represents the model's ability to discriminate between churners and non-churners across all possible thresholds. Gradient Boosting ranked second, confirming the superiority of boosting methods on this dataset.
-
-### 7.1 Threshold Selection
-
-Using a business cost framework:
-- **Cost of false positive** (unnecessary retention offer): €50
-- **Cost of false negative** (losing a customer): €500
-- **Cost ratio FN/FP = 10** → Optimal threshold biases toward higher recall
-
-The business-cost-minimising threshold (derived from the actual training run) is stored in `models/training_metadata.json`. At this threshold, the model achieves substantially higher recall than at the default 0.5 threshold, at an acceptable precision cost.
+| Tool | Version | Purpose |
+|------|---------|---------|
+| Python | 3.x | Core programming language |
+| Pandas | ≥2.0 | Data manipulation & analysis |
+| NumPy | ≥1.24 | Numerical computation |
+| Plotly Express | ≥5.15 | Interactive visualizations |
+| Matplotlib | ≥3.7 | Static plotting |
+| Seaborn | ≥0.12 | Statistical visualization |
+| Streamlit | ≥1.28 | Interactive dashboard |
+| Jupyter Notebook | — | Exploratory analysis environment |
 
 ---
 
-## 8. Explainability Findings
+## 4. Results & Analysis
 
-### 8.1 Top 5 Churn Drivers (SHAP Analysis)
+### 4.1 Overall Churn Statistics
 
-**1. Age** — The single strongest predictor. SHAP dependence shows elevated churn risk for customers aged 45–60. Younger customers show low risk; the pattern is non-monotonic with a peak in middle age.
+| Metric | Value |
+|--------|-------|
+| Total Customers | 10,000 |
+| Churned Customers | 2,037 |
+| Retained Customers | 7,963 |
+| **Overall Churn Rate** | **20.37%** |
 
-**2. Number of Products** — A U-shaped or inverted-U relationship: 2 products is the sweet spot (lowest churn risk); 1 product is high risk; 3–4 products is very high risk (possible product mis-selling or fee fatigue).
+The 20.37% churn rate indicates that approximately one in five customers left the bank, representing a significant retention challenge.
 
-**3. IsActiveMember** — Binary but powerful: inactive members contribute large positive SHAP values (increasing churn probability). This is the most directly actionable lever.
+### 4.2 Geographic Analysis
 
-**4. Balance** — Zero-balance and high-balance customers both show elevated risk. The pattern is complex and non-linear, justifying the use of tree-based models.
+| Geography | Churn Count | Churn Rate (%) |
+|-----------|-------------|----------------|
+| France | 810 | 16.15 |
+| **Germany** | **814** | **32.44** |
+| Spain | 413 | 16.67 |
 
-**5. Geography (Germany)** — Being in Germany adds positive SHAP value (higher churn risk) after controlling for all other features. This structural effect likely reflects competitive dynamics or service quality differentials.
+**Key Finding:** Germany's churn rate (32.44%) is approximately **double** that of France and Spain. Despite having a smaller customer base than France, Germany contributes a nearly equal absolute number of churned customers (814 vs. 810). This suggests systemic issues in the German market — potentially related to competitive intensity, service quality, or market-specific regulatory factors.
 
-### 8.2 Individual Explanations
+### 4.3 Gender Analysis
 
-SHAP waterfall plots provide customer-level explanations that comply with the "right to explanation" principle under GDPR Article 22. A customer with high predicted churn probability might receive an explanation such as: "Your high churn probability is primarily driven by: being an inactive member (+0.18), having a single product (+0.12), and being in the 45–55 age range (+0.09)."
+| Gender | Churn Count | Churn Rate (%) |
+|--------|-------------|----------------|
+| **Female** | **1,139** | **25.07** |
+| Male | 898 | 16.46 |
+
+**Key Finding:** Female customers churn at a rate **52% higher** than males (25.07% vs. 16.46%). This disparity warrants investigation into gender-specific service expectations, product offerings, and customer experience touchpoints.
+
+### 4.4 Age Group Analysis
+
+| Age Group | Churn Count | Churn Rate (%) |
+|-----------|-------------|----------------|
+| <30 | 148 | 7.52 |
+| 30-45 | 932 | 15.74 |
+| **45-60** | **842** | **51.12** |
+| 60+ | 115 | 24.78 |
+
+**Key Finding:** The 45–60 age group exhibits a dramatically elevated churn rate of **51.12%** — more than **3× the rate of the 30–45 group** and nearly **7× the rate of the <30 group**. This is the single most powerful demographic predictor of churn in the dataset. Possible explanations include:
+- Life-stage transitions (retirement planning, mortgage completion)
+- Accumulated dissatisfaction over years of service
+- Increased financial sophistication leading to competitive switching
+- Targeted offers from competitor banks for this high-value demographic
+
+The 60+ group shows a moderated churn rate (24.78%), possibly reflecting higher switching costs or greater inertia among older customers.
+
+### 4.5 Credit Score Analysis
+
+| Credit Band | Churn Count | Churn Rate (%) |
+|-------------|-------------|----------------|
+| Low (≤580) | 530 | 22.15 |
+| Medium (581-670) | 683 | 20.39 |
+| High (>670) | 824 | 19.36 |
+
+**Key Finding:** Credit score has a relatively **modest impact** on churn. The difference between the lowest and highest credit bands is only ~3 percentage points. This suggests that churn is driven more by service/relationship factors than by creditworthiness.
+
+### 4.6 Balance Segment Analysis
+
+| Balance Segment | Churn Count | Churn Rate (%) |
+|-----------------|-------------|----------------|
+| **High (>€0)** | **1,537** | **24.08** |
+| Zero (€0) | 500 | 13.82 |
+
+**Key Finding:** Customers with non-zero balances churn at nearly **double the rate** of zero-balance customers. This is a counter-intuitive but critically important finding — it means that **higher-value customers are more likely to leave**. These are the customers whose departure carries the greatest revenue impact, making them priority targets for retention programs.
+
+### 4.7 Tenure Group Analysis
+
+| Tenure Group | Churn Count | Churn Rate (%) |
+|--------------|-------------|----------------|
+| New (0-2 years) | 528 | 21.15 |
+| MidTerm (3-5 years) | 625 | 20.76 |
+| LongTerm (6-10 years) | 884 | 19.67 |
+
+**Key Finding:** Tenure shows a **slight inverse relationship** with churn — longer-tenured customers churn marginally less. However, the difference is small (~1.5 percentage points across the full tenure range), suggesting that tenure alone does not confer strong retention protection.
 
 ---
 
-## 9. Business Recommendations
+## 5. Interactive Dashboard
 
-1. **Re-engagement programme:** Target the 27% of customers who are inactive members with a personalised digital re-activation campaign. This addresses the second-largest churn driver.
+An interactive Streamlit dashboard (`app.py`) was developed to operationalize the analysis findings. The dashboard enables bank stakeholders to explore churn patterns in real time.
 
-2. **Cross-sell strategy (1→2 products):** Single-product customers have the highest churn rate and the clearest intervention path: a targeted offer for one additional relevant product (savings account, protection insurance, or investment fund). Avoid over-selling to customers who already have 3+ products.
+### 5.1 Architecture
 
-3. **Germany focus:** Allocate disproportionate retention budget to German operations. The approximately 2× higher churn rate, even after controlling for other factors, suggests structural competitive or service quality issues requiring management attention.
+- **Backend:** Pandas for data processing with `@st.cache_data` for performance optimization
+- **Frontend:** Streamlit with Plotly Express for interactive charts
+- **Filtering:** Sidebar-based multi-select filters for Geography, Gender, and Age Group
+- **Layout:** Wide layout with 4-tab organization
 
-4. **Age-band campaigns:** Design retention journeys specifically for the 45–60 cohort: wealth management review, preferential mortgage rates, and family financial planning services address the life-stage concerns of this group.
+### 5.2 Dashboard Components
 
-5. **Early warning system:** Deploy the Streamlit dashboard to relationship managers as a daily tool. High-risk customers (probability > threshold) should receive proactive outreach within 30 days.
+| Component | Description |
+|-----------|-------------|
+| **KPI Row** | Real-time metrics: Total Customers, Churned, Retained, Churn Rate |
+| **Tab 1 — Overview** | Donut chart showing overall churn/retention split |
+| **Tab 2 — Geography & Demographics** | Bar charts for churn by Geography, Gender, Age Group, Tenure Group |
+| **Tab 3 — Financial Profile** | Credit Band and Balance Segment analysis + High-Value Customer Explorer |
+| **Tab 4 — Drill-Down Data** | Full interactive data table with CSV download |
 
-6. **Retention offer budget:** At an assumed €500 CLV and €50 retention offer cost, the model enables cost-effective targeting: focus full retention offers on High-risk tier (probability > 0.60) and lighter-touch engagement for Medium-risk (0.30–0.60).
+### 5.3 Key Design Decisions
 
----
-
-## 10. Fairness Analysis
-
-A fairness check comparing ROC-AUC and Recall across Geography and Gender subgroups reveals:
-
-- **Geography:** The model maintains similar ROC-AUC across France, Germany, and Spain, indicating that predictive accuracy is not systematically better or worse for any geographic group. Recall is comparable across countries.
-- **Gender:** ROC-AUC is similar for Female and Male customers. However, given the higher baseline churn rate among female customers, absolute numbers of correctly identified churners differ. This should be monitored.
-
-**Regulatory compliance note:** Geography and Gender are used as features in the model alongside many behavioural signals. No prediction is made on the basis of these attributes alone. Model decisions should be reviewed quarterly by the Risk and Compliance function to identify any emergent disparate impact.
-
----
-
-## 11. Limitations
-
-1. **Dataset recency:** The dataset represents a single snapshot year (2025). Temporal dynamics of churn (seasonal patterns, economic cycles) are not captured.
-2. **Feature completeness:** Variables such as customer service contact frequency, digital channel usage, and competitor offer exposure are not available but are likely highly predictive.
-3. **Self-reported salary:** EstimatedSalary may not reflect true income, introducing measurement noise.
-4. **Causal inference:** The model identifies correlations, not causal relationships. Intervening on identified factors (e.g., increasing products to 2) will only be effective if the correlation reflects a causal mechanism.
-5. **Distribution shift:** The model should be retrained periodically (recommended: every 6 months) to account for changes in customer behaviour patterns.
+1. **Filter-driven updates:** All visualizations and KPIs update dynamically based on sidebar selections
+2. **High-Value Customer Explorer:** Dedicated section for monitoring churn among high-balance customers
+3. **Data export:** Built-in CSV download for filtered datasets, enabling further offline analysis
+4. **Empty state handling:** Graceful warning when filter combinations yield no results
 
 ---
 
-## 12. Future Work
+## 6. Discussion
 
-1. **Temporal features:** Incorporate transaction-level time series features (recent login frequency, transaction volume trend, balance change velocity)
-2. **Graph features:** Model customer networks to identify social influence on churn decisions
-3. **Online learning:** Implement incremental model updates as new customer data arrives
-4. **A/B testing integration:** Link model predictions to randomised retention experiments to measure true causal treatment effects
-5. **Deep learning exploration:** Test TabNet and other attention-based architectures on this structured dataset
+### 6.1 Synthesis of Findings
+
+The analysis reveals a **multi-dimensional churn profile** for European banking customers. The highest-risk customer persona emerges as:
+
+> **A female customer, aged 45–60, based in Germany, with a non-zero account balance**
+
+This persona combines the highest-risk attributes across all analyzed dimensions. While this represents the extreme case, each individual risk factor independently elevates churn probability.
+
+### 6.2 The High-Value Churn Paradox
+
+Perhaps the most strategically significant finding is the **positive correlation between account balance and churn** (24.08% for non-zero vs. 13.82% for zero-balance). This creates a paradoxical situation where the customers most valuable to the bank are also the most likely to leave. Possible explanations include:
+
+- **Higher expectations:** Customers with larger balances may expect premium service and become dissatisfied more easily
+- **Greater financial literacy:** These customers may be more aware of competitive alternatives
+- **Attractive to competitors:** High-balance customers are likely targeted aggressively by competing institutions
+- **Lower switching costs relative to balance size:** The perceived benefit of switching may outweigh the hassle for customers with significant assets
+
+### 6.3 The Germany Question
+
+Germany's anomalous churn rate (32.44% vs. ~16% for France and Spain) demands explanation. Potential contributing factors include:
+
+- **Higher banking competition** in the German market (numerous Sparkassen, Volksbanken, and digital-only banks)
+- **Cultural factors** around banking loyalty and willingness to switch
+- **Regulatory environment** differences that may facilitate or incentivize switching
+- **Service quality gaps** specific to the German operation
+
+### 6.4 Limitations
+
+1. **Single time point:** The dataset captures a single year (2025), limiting the ability to assess trends
+2. **No causal inference:** This is a correlational analysis; observed associations do not establish causation
+3. **Missing variables:** Customer satisfaction scores, complaint history, digital engagement metrics, and competitive offers are not captured
+4. **Binary balance segmentation:** The balance feature was segmented into only two categories (Zero/High), which may miss nuances at intermediate balance levels
+5. **No predictive modeling:** This study focuses on descriptive/diagnostic analytics; predictive models (Logistic Regression, Random Forest, XGBoost) could quantify individual churn probability
 
 ---
 
-## 13. Conclusion
+## 7. Recommendations
 
-This paper presents a complete, production-ready churn intelligence system for retail banking. The XGBoost model achieves strong discriminative performance (ROC-AUC > 0.87), validated by rigorous cross-validation and an independent held-out test set. SHAP analysis provides transparent, customer-level explanations that satisfy regulatory requirements. The business-cost-optimised threshold ensures that the model's operating point aligns with the economic reality of retention costs vs churn losses. The Streamlit dashboard operationalises these findings for daily use by relationship managers and compliance teams.
+Based on the analysis, we recommend the following retention strategies:
 
-The five key churn drivers — customer engagement (IsActiveMember), product portfolio breadth (NumOfProducts), age cohort, account balance, and geographic market — provide clear, actionable levers for retention strategy. Immediate implementation of the recommended re-engagement and cross-sell programmes is projected to meaningfully reduce the 20.4% churn rate.
+### 7.1 Immediate Actions (0–3 months)
+
+| # | Recommendation | Target Segment | Expected Impact |
+|---|---------------|----------------|-----------------|
+| 1 | Launch dedicated retention program for Germany | German customers | Address 32.44% churn rate |
+| 2 | Implement proactive outreach for 45–60 age group | Age 45-60 | Reduce 51.12% churn rate |
+| 3 | Design female-specific engagement programs | Female customers | Address 25.07% churn rate |
+
+### 7.2 Medium-Term Initiatives (3–12 months)
+
+| # | Recommendation | Rationale |
+|---|---------------|-----------|
+| 4 | Create high-value customer loyalty program | High-balance customers churn at 24.08% — protect revenue |
+| 5 | Develop customer satisfaction surveys | Fill data gap on *why* customers churn |
+| 6 | Build predictive churn model | Move from descriptive to predictive analytics |
+
+### 7.3 Strategic Initiatives (12+ months)
+
+| # | Recommendation | Rationale |
+|---|---------------|-----------|
+| 7 | Personalized product bundling | Increase products per customer to raise switching costs |
+| 8 | Competitive benchmarking in German market | Understand why Germany's churn rate is 2× peer markets |
+| 9 | Life-stage banking programs | Address the 45–60 age group's unique financial transition needs |
+
+---
+
+## 8. Future Work
+
+1. **Predictive Modeling:** Train machine learning models (Logistic Regression, Random Forest, XGBoost) to predict individual churn probability
+2. **Temporal Analysis:** Incorporate multi-year data to identify churn trends and seasonal patterns
+3. **Customer Lifetime Value (CLV):** Calculate CLV to prioritize retention efforts by revenue impact
+4. **Sentiment Analysis:** Integrate customer feedback/complaint data for qualitative churn driver analysis
+5. **A/B Testing Framework:** Design controlled experiments to test retention intervention effectiveness
+6. **Real-Time Scoring:** Deploy the churn model as an API for real-time risk scoring in CRM systems
+
+---
+
+## 9. Conclusion
+
+This study demonstrates that customer churn in European banking is not uniformly distributed but is concentrated in identifiable, actionable segments. The 20.37% overall churn rate masks dramatic variation: from 7.52% among customers under 30 to 51.12% among those aged 45–60, and from 16.15% in France to 32.44% in Germany.
+
+The finding that high-balance customers churn at disproportionately high rates (24.08%) underscores the urgency of targeted retention — the customers most likely to leave are the ones the bank can least afford to lose.
+
+The interactive Streamlit dashboard developed as part of this project provides bank stakeholders with a practical, self-service tool for monitoring churn patterns and identifying at-risk segments in real time. By combining rigorous analysis with accessible visualization, this project bridges the gap between data science insight and business decision-making.
 
 ---
 
 ## References
 
-- Alboukaey, N. et al. (2020). Dynamic behavior based churn prediction in mobile telecom. *Expert Systems with Applications*, 162.
-- Chawla, N.V. et al. (2002). SMOTE: Synthetic Minority Over-sampling Technique. *JAIR*, 16, 321–357.
-- Friedman, J.H. (2001). Greedy function approximation: a gradient boosting machine. *Annals of Statistics*, 29(5), 1189–1232.
-- Hadden, J. et al. (2007). Computer assisted customer churn management. *Expert Systems with Applications*, 32(3), 823–831.
-- Lalwani, P. et al. (2022). Customer churn prediction system: a machine learning approach. *Computing*, 104, 271–294.
-- Lundberg, S.M. & Lee, S.I. (2017). A unified approach to interpreting model predictions. *NeurIPS 2017*.
-- Reichheld, F.F. & Sasser, W.E. (1990). Zero defections: quality comes to services. *Harvard Business Review*, 68(5), 105–111.
+1. Reichheld, F. F., & Sasser, W. E. (1990). Zero defections: Quality comes to services. *Harvard Business Review*, 68(5), 105–111.
+2. Keramati, A., Jafari-Marandi, R., Aliannejadi, M., Ahmadian, I., Mozaffari, M., & Abbasi, U. (2014). Improved churn prediction in telecommunication industry using data mining techniques. *Applied Soft Computing*, 24, 994–1012.
+3. Xie, Y., Li, X., Ngai, E. W. T., & Ying, W. (2009). Customer churn prediction using improved balanced random forests. *Expert Systems with Applications*, 36(3), 5445–5449.
+4. Tukey, J. W. (1977). *Exploratory Data Analysis*. Addison-Wesley.
+5. European Central Bank. (2024). *Report on the Payment Systems and Market Infrastructure*. ECB Publications.
+6. Hadden, J., Tiwari, A., Roy, R., & Ruta, D. (2007). Computer assisted customer churn management: State-of-the-art and future trends. *Computers & Operations Research*, 34(10), 2902–2917.
+
+---
+
+## Appendix A: Descriptive Statistics
+
+| Statistic | CreditScore | Age | Tenure | Balance | NumOfProducts | EstimatedSalary |
+|-----------|-------------|-----|--------|---------|---------------|-----------------|
+| Count | 10,000 | 10,000 | 10,000 | 10,000 | 10,000 | 10,000 |
+| Mean | 650.53 | 38.92 | 5.01 | 76,485.89 | 1.53 | 100,090.24 |
+| Std | 96.65 | 10.49 | 2.89 | 62,397.41 | 0.58 | 57,510.49 |
+| Min | 350 | 18 | 0 | 0.00 | 1 | 11.58 |
+| 25% | 584 | 32 | 3 | 0.00 | 1 | 51,002.11 |
+| 50% | 652 | 37 | 5 | 97,198.54 | 1 | 100,193.92 |
+| 75% | 718 | 44 | 7 | 127,644.24 | 2 | 149,388.25 |
+| Max | 850 | 92 | 10 | 250,898.09 | 4 | 199,992.48 |
+
+## Appendix B: Churn Summary Table
+
+| Segment | Category | Churn Rate (%) | Risk Level |
+|---------|----------|----------------|------------|
+| Overall | — | 20.37 | Moderate |
+| Geography | France | 16.15 | Low |
+| Geography | Germany | 32.44 | **High** |
+| Geography | Spain | 16.67 | Low |
+| Gender | Female | 25.07 | Moderate-High |
+| Gender | Male | 16.46 | Low |
+| Age Group | <30 | 7.52 | Very Low |
+| Age Group | 30-45 | 15.74 | Low |
+| Age Group | 45-60 | 51.12 | **Critical** |
+| Age Group | 60+ | 24.78 | Moderate-High |
+| Credit Band | Low | 22.15 | Moderate |
+| Credit Band | Medium | 20.39 | Moderate |
+| Credit Band | High | 19.36 | Moderate |
+| Balance | High (>€0) | 24.08 | Moderate-High |
+| Balance | Zero (€0) | 13.82 | Low |
+| Tenure | New | 21.15 | Moderate |
+| Tenure | MidTerm | 20.76 | Moderate |
+| Tenure | LongTerm | 19.67 | Moderate |
+
+---
+
+*This research paper was prepared as part of the European Banking Customer Churn Analysis project.*
+*Author: Salah | Year: 2025*
