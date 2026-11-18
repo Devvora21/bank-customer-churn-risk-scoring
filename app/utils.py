@@ -70,30 +70,11 @@ def load_all_pipelines():
 
 @st.cache_data(show_spinner=False)
 def load_scored_data():
-    """Load pre-scored customer data and enrich with segmentation attributes."""
+    """Load pre-scored customer data."""
     path = os.path.join(DATA_PROCESSED, "customer_risk_scores.csv")
     if os.path.exists(path):
-        df = pd.read_csv(path)
-        if "AgeGroup" not in df.columns and "Age" in df.columns:
-            df["AgeGroup"] = pd.cut(df["Age"], bins=[0, 30, 45, 60, 100], labels=["<30", "30-45", "45-60", "60+"])
-        if "CreditBand" not in df.columns and "CreditScore" in df.columns:
-            df["CreditBand"] = pd.cut(df["CreditScore"], bins=[0, 580, 670, 850], labels=["Low", "Medium", "High"])
-        if "BalanceSegment" not in df.columns and "Balance" in df.columns:
-            df["BalanceSegment"] = df["Balance"].apply(lambda x: "Zero" if x == 0 else "High")
-        if "TenureGroup" not in df.columns and "Tenure" in df.columns:
-            df["TenureGroup"] = pd.cut(df["Tenure"], bins=[-1, 2, 5, 10], labels=["New", "MidTerm", "LongTerm"])
-        return df
+        return pd.read_csv(path)
     return None
-
-
-def churn_by_segment(data: pd.DataFrame, column: str) -> pd.DataFrame:
-    """Helper function from template to calculate churn rate by customer segment."""
-    if data is None or data.empty or column not in data.columns or "Exited" not in data.columns:
-        return pd.DataFrame(columns=[column, "ChurnCount", "TotalCount", "ChurnRate"])
-    grouped = data.groupby(column)["Exited"].agg(["sum", "count"]).reset_index()
-    grouped.columns = [column, "ChurnCount", "TotalCount"]
-    grouped["ChurnRate"] = (grouped["ChurnCount"] / grouped["TotalCount"] * 100).round(2)
-    return grouped
 
 
 @st.cache_data(show_spinner=False)

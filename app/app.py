@@ -57,7 +57,6 @@ from utils import (
     load_metrics_table, load_shap_importance, load_test_data,
     prepare_customer_input, predict_single,
     get_shap_explainer, get_individual_shap, get_retention_recommendations,
-    churn_by_segment,
     TIER_COLORS, TIER_BG_COLORS,
 )
 from preprocessing import NUMERIC_FEATURES, CATEGORICAL_FEATURES, TARGET
@@ -1149,8 +1148,6 @@ with st.sidebar:
         "Navigation",
         [
             "Overview",
-            "Geography & Demographics",
-            "Financial Profile",
             "Risk Calculator",
             "Portfolio Explorer",
             "Probability Distribution",
@@ -1205,16 +1202,6 @@ header_meta = {
         "badge": "Portfolio Health Monitor • Live Scoring Feed",
         "title": "Customer Risk Overview",
         "desc": "Portfolio-wide churn propensity monitoring, early warning signals, and retention intervention tracking",
-    },
-    "Geography & Demographics": {
-        "badge": "Demographic Pattern Analytics • European Banking Cohort",
-        "title": "Geography & Demographics Churn Analytics",
-        "desc": "Segment-level empirical churn behavior across European territories, age cohorts, gender segments, and customer tenure groups.",
-    },
-    "Financial Profile": {
-        "badge": "Wealth & Balance Analysis • High-Value Customer Explorer",
-        "title": "Financial Profile & High-Value Explorer",
-        "desc": "Dissect customer attrition patterns by credit score bands, deposit balance tiers, and high-balance account vulnerability.",
     },
     "Risk Calculator": {
         "badge": "Inference Model v2.4r • Latency 14ms (Calibrated Pipeline)",
@@ -1474,290 +1461,6 @@ if nav_selection == "Overview":
             The decision threshold of <b>{threshold:.2f}</b> minimizes financial misclassification cost (€500 FN vs €50 FP), yielding an 87.96% churn recall rate.
         </div>
         """, unsafe_allow_html=True)
-
-
-# ══════════════════════════════════════════════
-# WORKSPACE: GEOGRAPHY & DEMOGRAPHICS (TEMPLATE TAB 2)
-# ══════════════════════════════════════════════
-
-elif nav_selection == "Geography & Demographics":
-    st.markdown(f"""
-    <div class="callout-info">
-        Customer segmentation & churn pattern analytics across European territories, gender cohorts, age bands, and banking relationship tenure groups.
-    </div>
-    """, unsafe_allow_html=True)
-
-    if scored_data is not None:
-        # Top Demographic Highlights Banner
-        geo_agg = churn_by_segment(scored_data, "Geography")
-        gender_agg = churn_by_segment(scored_data, "Gender")
-        age_agg = churn_by_segment(scored_data, "AgeGroup")
-        tenure_agg = churn_by_segment(scored_data, "TenureGroup")
-
-        # 4 KPI Summary Cards
-        d1, d2, d3, d4 = st.columns(4)
-        with d1:
-            ger_match = geo_agg[geo_agg["Geography"] == "Germany"]
-            ger_rate = ger_match["ChurnRate"].values[0] if len(ger_match) > 0 else 0
-            st.markdown(f"""
-            <div class="precision-kpi-card" style="border-top:3px solid var(--error);">
-                <span class="kpi-title-label">Germany Churn Apex</span>
-                <div class="kpi-big-num" style="color:var(--error);">{ger_rate:.1f}%</div>
-                <div class="kpi-footer-sub">2x higher than France & Spain</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with d2:
-            fem_match = gender_agg[gender_agg["Gender"] == "Female"]
-            fem_rate = fem_match["ChurnRate"].values[0] if len(fem_match) > 0 else 0
-            st.markdown(f"""
-            <div class="precision-kpi-card" style="border-top:3px solid var(--med-risk-fg);">
-                <span class="kpi-title-label">Female Churn Rate</span>
-                <div class="kpi-big-num" style="color:var(--med-risk-fg);">{fem_rate:.1f}%</div>
-                <div class="kpi-footer-sub">vs. 16.5% for Male Accounts</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with d3:
-            mid_match = age_agg[age_agg["AgeGroup"] == "45-60"]
-            mid_age_rate = mid_match["ChurnRate"].values[0] if len(mid_match) > 0 else 0
-            st.markdown(f"""
-            <div class="precision-kpi-card" style="border-top:3px solid var(--error);">
-                <span class="kpi-title-label">Age 45–60 Critical Band</span>
-                <div class="kpi-big-num" style="color:var(--error);">{mid_age_rate:.1f}%</div>
-                <div class="kpi-footer-sub">>3x higher than &lt;30 cohort</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with d4:
-            new_match = tenure_agg[tenure_agg["TenureGroup"] == "New"]
-            new_ten_rate = new_match["ChurnRate"].values[0] if len(new_match) > 0 else 0
-            st.markdown(f"""
-            <div class="precision-kpi-card" style="border-top:3px solid var(--primary);">
-                <span class="kpi-title-label">New Account Churn (0-2y)</span>
-                <div class="kpi-big-num">{new_ten_rate:.1f}%</div>
-                <div class="kpi-footer-sub">Tenure Group Stability Metric</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("<div style='height:1.2rem;'></div>", unsafe_allow_html=True)
-
-        # 2x2 Grid of Demographic Visualizations
-        r1_c1, r1_c2 = st.columns(2)
-
-        with r1_c1:
-            st.markdown('<div class="precision-card-header">🌍 Empirical Churn Rate by Geography</div>', unsafe_allow_html=True)
-            fig_geo_bar = go.Figure(go.Bar(
-                x=geo_agg["Geography"],
-                y=geo_agg["ChurnRate"],
-                text=[f"{v:.1f}%" for v in geo_agg["ChurnRate"]],
-                textposition="outside",
-                textfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
-                marker_color=[TOKENS["error"] if g == "Germany" else TOKENS["primary"] for g in geo_agg["Geography"]],
-            ))
-            fig_geo_bar.update_layout(
-                yaxis=dict(title=dict(text="Churn Rate (%)", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])), tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]), range=[0, 42]),
-                xaxis=dict(title=dict(text="Territory / Country", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])), tickfont=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
-                margin=dict(l=30, r=30, t=25, b=30),
-            )
-            render_precision_chart(fig_geo_bar, height=330)
-
-        with r1_c2:
-            st.markdown('<div class="precision-card-header">👥 Empirical Churn Rate by Gender</div>', unsafe_allow_html=True)
-            fig_gen_bar = go.Figure(go.Bar(
-                x=gender_agg["Gender"],
-                y=gender_agg["ChurnRate"],
-                text=[f"{v:.1f}%" for v in gender_agg["ChurnRate"]],
-                textposition="outside",
-                textfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
-                marker_color=[TOKENS["med_risk_fg"] if g == "Female" else TOKENS["primary"] for g in gender_agg["Gender"]],
-            ))
-            fig_gen_bar.update_layout(
-                yaxis=dict(title=dict(text="Churn Rate (%)", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])), tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]), range=[0, 35]),
-                xaxis=dict(title=dict(text="Customer Gender", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])), tickfont=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
-                margin=dict(l=30, r=30, t=25, b=30),
-            )
-            render_precision_chart(fig_gen_bar, height=330)
-
-        st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
-        r2_c1, r2_c2 = st.columns(2)
-
-        with r2_c1:
-            st.markdown('<div class="precision-card-header">🎂 Churn Rate by Age Cohort</div>', unsafe_allow_html=True)
-            age_order = ["<30", "30-45", "45-60", "60+"]
-            age_agg["Order"] = age_agg["AgeGroup"].apply(lambda x: age_order.index(x) if x in age_order else 99)
-            age_agg = age_agg.sort_values("Order")
-            fig_age_bar = go.Figure(go.Bar(
-                x=age_agg["AgeGroup"],
-                y=age_agg["ChurnRate"],
-                text=[f"{v:.1f}%" for v in age_agg["ChurnRate"]],
-                textposition="outside",
-                textfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
-                marker_color=[TOKENS["error"] if a == "45-60" else (TOKENS["med_risk_fg"] if a == "60+" else TOKENS["tertiary"]) for a in age_agg["AgeGroup"]],
-            ))
-            fig_age_bar.update_layout(
-                yaxis=dict(title=dict(text="Churn Rate (%)", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])), tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]), range=[0, 60]),
-                xaxis=dict(title=dict(text="Age Cohort", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])), tickfont=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
-                margin=dict(l=30, r=30, t=25, b=30),
-            )
-            render_precision_chart(fig_age_bar, height=330)
-
-        with r2_c2:
-            st.markdown('<div class="precision-card-header">⏳ Churn Rate by Tenure Group</div>', unsafe_allow_html=True)
-            ten_order = ["New", "MidTerm", "LongTerm"]
-            tenure_agg["Order"] = tenure_agg["TenureGroup"].apply(lambda x: ten_order.index(x) if x in ten_order else 99)
-            tenure_agg = tenure_agg.sort_values("Order")
-            fig_ten_bar = go.Figure(go.Bar(
-                x=tenure_agg["TenureGroup"],
-                y=tenure_agg["ChurnRate"],
-                text=[f"{v:.1f}%" for v in tenure_agg["ChurnRate"]],
-                textposition="outside",
-                textfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
-                marker_color=TOKENS["primary"],
-            ))
-            fig_ten_bar.update_layout(
-                yaxis=dict(title=dict(text="Churn Rate (%)", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])), tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]), range=[0, 30]),
-                xaxis=dict(title=dict(text="Tenure Group (New: 0-2y, Mid: 3-5y, Long: 6-10y)", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])), tickfont=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
-                margin=dict(l=30, r=30, t=25, b=30),
-            )
-            render_precision_chart(fig_ten_bar, height=330)
-
-        st.markdown(f"""
-        <div class="callout-info" style="margin-top:1.2rem;">
-            <b>Key Findings (from European Banking Research Paper):</b>
-            <ul>
-                <li><b>Territorial Divergence:</b> German customers churn at <b>32.44%</b>, significantly outpacing France (16.15%) and Spain (16.67%). Market-specific fee sensitivity and branch restructuring play a dominant role.</li>
-                <li><b>Demographic Risk Apex:</b> Customers aged <b>45–60 exhibit a 51.12% churn rate</b> — over 3 times that of younger retail clients.</li>
-                <li><b>Gender Disparity:</b> Female customer churn (25.07%) is 8.6 percentage points higher than male customer churn (16.46%).</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-
-
-# ══════════════════════════════════════════════
-# WORKSPACE: FINANCIAL PROFILE & HIGH-VALUE EXPLORER (TEMPLATE TAB 3)
-# ══════════════════════════════════════════════
-
-elif nav_selection == "Financial Profile":
-    st.markdown(f"""
-    <div class="callout-info">
-        Financial holdings, credit score bands, deposit balances, and vulnerability of high-net-worth customer segments.
-    </div>
-    """, unsafe_allow_html=True)
-
-    if scored_data is not None:
-        # High-Value Customer Metrics
-        high_val_df = scored_data[scored_data["BalanceSegment"] == "High"]
-        zero_val_df = scored_data[scored_data["BalanceSegment"] == "Zero"]
-        
-        hv_total = len(high_val_df)
-        hv_churned = int(high_val_df["Exited"].sum()) if "Exited" in high_val_df.columns else int(high_val_df["Churn_Predicted"].sum())
-        hv_rate = (hv_churned / hv_total * 100) if hv_total > 0 else 0
-        hv_capital = high_val_df["Balance"].sum()
-        hv_at_risk_capital = high_val_df[high_val_df["Risk_Tier"] == "High"]["Balance"].sum()
-
-        credit_agg = churn_by_segment(scored_data, "CreditBand")
-        bal_agg = churn_by_segment(scored_data, "BalanceSegment")
-
-        # 4 High-Value KPI Cards
-        f1, f2, f3, f4 = st.columns(4)
-        with f1:
-            st.markdown(f"""
-            <div class="precision-kpi-card">
-                <span class="kpi-title-label">High-Balance Accounts (>€0)</span>
-                <div class="kpi-big-num">{hv_total:,}</div>
-                <div class="kpi-footer-sub">Total Deposits: <b>€{hv_capital:,.0f}</b></div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with f2:
-            st.markdown(f"""
-            <div class="precision-kpi-card" style="border-top:3px solid var(--error);">
-                <span class="kpi-title-label">High-Balance Churn Rate</span>
-                <div class="kpi-big-num" style="color:var(--error);">{hv_rate:.1f}%</div>
-                <div class="kpi-footer-sub">vs. 13.8% for Zero-Balance Accounts</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with f3:
-            st.markdown(f"""
-            <div class="precision-kpi-card" style="border-top:3px solid var(--error);">
-                <span class="kpi-title-label">High-Balance Churned</span>
-                <div class="kpi-big-num" style="color:var(--error);">{hv_churned:,}</div>
-                <div class="kpi-footer-sub">Accounts Attrited</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with f4:
-            st.markdown(f"""
-            <div class="precision-kpi-card" style="border-top:3px solid var(--med-risk-fg);">
-                <span class="kpi-title-label">At-Risk High-Tier Capital</span>
-                <div class="kpi-big-num" style="color:var(--med-risk-fg);">€{hv_at_risk_capital:,.0f}</div>
-                <div class="kpi-footer-sub">Subject to Active Model Remediation</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("<div style='height:1.2rem;'></div>", unsafe_allow_html=True)
-
-        # 2 Bar Charts
-        fc1, fc2 = st.columns(2)
-
-        with fc1:
-            st.markdown('<div class="precision-card-header">💳 Churn Rate by Credit Score Band</div>', unsafe_allow_html=True)
-            credit_order = ["Low", "Medium", "High"]
-            credit_agg["Order"] = credit_agg["CreditBand"].apply(lambda x: credit_order.index(x) if x in credit_order else 99)
-            credit_agg = credit_agg.sort_values("Order")
-            fig_cred = go.Figure(go.Bar(
-                x=credit_agg["CreditBand"],
-                y=credit_agg["ChurnRate"],
-                text=[f"{v:.1f}%" for v in credit_agg["ChurnRate"]],
-                textposition="outside",
-                textfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
-                marker_color=[TOKENS["error"] if b == "Low" else (TOKENS["med_risk_fg"] if b == "Medium" else TOKENS["primary"]) for b in credit_agg["CreditBand"]],
-            ))
-            fig_cred.update_layout(
-                yaxis=dict(title=dict(text="Churn Rate (%)", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])), tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]), range=[0, 30]),
-                xaxis=dict(title=dict(text="Credit Band (Low: ≤580, Medium: 581-670, High: >670)", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])), tickfont=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
-                margin=dict(l=30, r=30, t=25, b=30),
-            )
-            render_precision_chart(fig_cred, height=330)
-
-        with fc2:
-            st.markdown('<div class="precision-card-header">💰 Churn Rate by Account Balance Segment</div>', unsafe_allow_html=True)
-            fig_bal = go.Figure(go.Bar(
-                x=bal_agg["BalanceSegment"],
-                y=bal_agg["ChurnRate"],
-                text=[f"{v:.1f}%" for v in bal_agg["ChurnRate"]],
-                textposition="outside",
-                textfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]),
-                marker_color=[TOKENS["error"] if s == "High" else TOKENS["tertiary"] for s in bal_agg["BalanceSegment"]],
-            ))
-            fig_bal.update_layout(
-                yaxis=dict(title=dict(text="Churn Rate (%)", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])), tickfont=dict(family="Inter", size=12, color=TOKENS["on_surface"]), range=[0, 35]),
-                xaxis=dict(title=dict(text="Balance Segment (Zero: €0 vs High: >€0)", font=dict(family="Inter", size=13, color=TOKENS["on_surface"])), tickfont=dict(family="Inter", size=13, color=TOKENS["on_surface"])),
-                margin=dict(l=30, r=30, t=25, b=30),
-            )
-            render_precision_chart(fig_bal, height=330)
-
-        st.markdown("<div style='height:1.25rem;'></div>", unsafe_allow_html=True)
-        st.markdown('<div class="precision-card-header">💎 High-Value Customer Explorer (>€100k Balances at Risk)</div>', unsafe_allow_html=True)
-
-        hv_drilldown = scored_data[(scored_data["Balance"] >= 100000) & (scored_data["Risk_Tier"] == "High")].sort_values("Balance", ascending=False)
-        st.caption(f"Identified {len(hv_drilldown):,} premium accounts holding >= €100,000 deposits tagged in HIGH RISK tier.")
-
-        hv_cols = ["CustomerId", "Surname", "Geography", "Balance", "CreditScore", "Age", "NumOfProducts", "Churn_Probability", "Risk_Tier"]
-        hv_avail = [c for c in hv_cols if c in hv_drilldown.columns]
-
-        st.dataframe(
-            hv_drilldown[hv_avail].head(100).style.format({
-                "Balance": "€{:,.2f}",
-                "Churn_Probability": "{:.3f}",
-                "CreditScore": "{:.0f}",
-                "Age": "{:.0f}",
-            }),
-            use_container_width=True,
-            height=300,
-        )
 
 
 # ══════════════════════════════════════════════
@@ -2084,9 +1787,9 @@ elif nav_selection == "Portfolio Explorer":
 
         # Display Table with Streamlit styled columns
         table_cols = [
-            "CustomerId", "Surname", "Geography", "Gender", "Age", "AgeGroup",
-            "CreditScore", "CreditBand", "Balance", "BalanceSegment", "NumOfProducts",
-            "Tenure", "TenureGroup", "IsActiveMember", "Churn_Probability", "Risk_Tier"
+            "CustomerId", "Surname", "Geography", "Gender", "Age",
+            "CreditScore", "Balance", "NumOfProducts", "IsActiveMember",
+            "Churn_Probability", "Risk_Tier"
         ]
         available_cols = [c for c in table_cols if c in filtered_df.columns]
 
