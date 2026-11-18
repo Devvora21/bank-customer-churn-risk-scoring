@@ -623,17 +623,21 @@ div[data-testid="stForm"] {{
 
 /* ═══════════════════════════════════════════════════
    PREMIUM DROPDOWN / SELECTBOX DESIGN SYSTEM
-   Identical look in Light & Dark — polished & crisp
+   Polished, high-contrast, theme-reactive styling
    ═══════════════════════════════════════════════════ */
 
 /* ── Closed-state trigger / pill (the visible box) ── */
-div[data-baseweb="select"] {{
+div[data-baseweb="select"],
+div[data-testid="stSelectbox"] > div,
+div[data-testid="stMultiSelect"] > div {{
     border-radius: 9px !important;
 }}
 
-div[data-baseweb="select"] > div {{
-    background-color: var(--surface-low) !important;
-    border: 1.5px solid var(--outline-variant) !important;
+div[data-baseweb="select"] > div,
+div[data-baseweb="select"] [class*="control"] {{
+    background-color: {TOKENS["surface_container_lowest"]} !important;
+    background: {TOKENS["surface_container_lowest"]} !important;
+    border: 1.5px solid {TOKENS["outline_variant"]} !important;
     border-radius: 9px !important;
     transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
     min-height: 2.6rem !important;
@@ -641,33 +645,45 @@ div[data-baseweb="select"] > div {{
 
 /* Focused / active trigger */
 div[data-baseweb="select"] > div:focus-within,
-div[data-baseweb="select"][aria-expanded="true"] > div {{
-    border-color: var(--primary) !important;
+div[data-baseweb="select"][aria-expanded="true"] > div,
+div[data-baseweb="select"] [class*="control"]:focus-within {{
+    border-color: {TOKENS["primary"]} !important;
     box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18) !important;
     outline: none !important;
 }}
 
-/* ── Selected value text & placeholder ── */
-div[data-baseweb="select"] div,
-div[data-baseweb="select"] span,
-div[data-baseweb="select"] p,
+/* ── Selected value text & input text inside selectbox ── */
+div[data-baseweb="select"] div[class*="singleValue"],
 div[data-baseweb="select"] [aria-selected="true"],
-div[data-baseweb="select"] [class*="valueContainer"] *,
-div[data-baseweb="select"] * {{
-    background-color: transparent !important;
-    color: var(--on-surface) !important;
-    -webkit-text-fill-color: var(--on-surface) !important;
+div[data-baseweb="select"] div[class*="valueContainer"] div,
+div[data-baseweb="select"] div[class*="valueContainer"] span,
+div[data-baseweb="select"] input {{
+    color: {TOKENS["on_surface"]} !important;
+    -webkit-text-fill-color: {TOKENS["on_surface"]} !important;
     font-family: 'Inter', -apple-system, sans-serif !important;
     font-weight: 600 !important;
     font-size: 0.9rem !important;
 }}
 
+/* ── Placeholder text inside selectbox (distinct, crisp contrast) ── */
+div[data-baseweb="select"] div[class*="placeholder"],
+div[data-baseweb="select"] [class*="Placeholder"],
+div[data-baseweb="select"] [data-placeholder="true"],
+div[data-baseweb="select"] div[class*="valueContainer"] > div:first-child:not([class*="singleValue"]):not([class*="Input"]) {{
+    color: {TOKENS["on_surface_variant"]} !important;
+    -webkit-text-fill-color: {TOKENS["on_surface_variant"]} !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 0.9rem !important;
+    opacity: 0.85 !important;
+}}
+
 /* ── Chevron / caret icon ── */
 div[data-baseweb="select"] svg,
 div[data-baseweb="select"] svg path {{
-    fill: var(--on-surface-variant) !important;
-    color: var(--on-surface-variant) !important;
-    opacity: 0.85 !important;
+    fill: {TOKENS["on_surface_variant"]} !important;
+    color: {TOKENS["on_surface_variant"]} !important;
+    opacity: 0.9 !important;
 }}
 
 /* ══════════════════════════════════════════
@@ -678,11 +694,12 @@ div[data-baseweb="popover"] > div,
 ul[role="listbox"],
 div[data-baseweb="menu"],
 div[data-baseweb="menu"] > ul {{
-    background-color: var(--surface-low) !important;
-    border: 1.5px solid var(--outline-variant) !important;
+    background-color: {TOKENS["surface_container_lowest"]} !important;
+    background: {TOKENS["surface_container_lowest"]} !important;
+    border: 1.5px solid {TOKENS["outline_variant"]} !important;
     border-radius: 10px !important;
-    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.42),
-                0 4px 12px -4px rgba(0, 0, 0, 0.22) !important;
+    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.28),
+                0 4px 12px -4px rgba(0, 0, 0, 0.12) !important;
     padding: 6px 4px !important;
     z-index: 999999 !important;
     overflow: hidden !important;
@@ -694,8 +711,8 @@ ul[role="listbox"] li,
 div[data-baseweb="menu"] li,
 div[data-baseweb="menu"] [role="option"] {{
     background-color: transparent !important;
-    color: var(--on-surface) !important;
-    -webkit-text-fill-color: var(--on-surface) !important;
+    color: {TOKENS["on_surface"]} !important;
+    -webkit-text-fill-color: {TOKENS["on_surface"]} !important;
     font-family: 'Inter', -apple-system, sans-serif !important;
     font-weight: 500 !important;
     font-size: 0.88rem !important;
@@ -711,19 +728,19 @@ li[role="option"] *,
 ul[role="listbox"] li *,
 div[data-baseweb="menu"] [role="option"] *,
 div[data-baseweb="menu"] li * {{
-    color: var(--on-surface) !important;
-    -webkit-text-fill-color: var(--on-surface) !important;
+    color: {TOKENS["on_surface"]} !important;
+    -webkit-text-fill-color: {TOKENS["on_surface"]} !important;
     font-family: 'Inter', -apple-system, sans-serif !important;
     font-weight: 500 !important;
     background-color: transparent !important;
 }}
 
-/* ── Hover / active / selected state ── */
+/* ── Hover / active state ── */
 li[role="option"]:hover,
 ul[role="listbox"] li:hover,
 div[data-baseweb="menu"] [role="option"]:hover,
 div[data-baseweb="menu"] li:hover {{
-    background-color: var(--primary) !important;
+    background-color: {TOKENS["primary"]} !important;
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
 }}
@@ -736,18 +753,19 @@ div[data-baseweb="menu"] li:hover * {{
     -webkit-text-fill-color: #ffffff !important;
 }}
 
+/* ── Selected state ── */
 li[role="option"][aria-selected="true"],
 ul[role="listbox"] li[aria-selected="true"] {{
-    background-color: var(--primary-container) !important;
-    color: var(--on-primary-container) !important;
-    -webkit-text-fill-color: var(--on-primary-container) !important;
+    background-color: {TOKENS["primary_container"]} !important;
+    color: {TOKENS["on_primary_container"]} !important;
+    -webkit-text-fill-color: {TOKENS["on_primary_container"]} !important;
     font-weight: 700 !important;
 }}
 
 li[role="option"][aria-selected="true"] *,
 ul[role="listbox"] li[aria-selected="true"] * {{
-    color: var(--on-primary-container) !important;
-    -webkit-text-fill-color: var(--on-primary-container) !important;
+    color: {TOKENS["on_primary_container"]} !important;
+    -webkit-text-fill-color: {TOKENS["on_primary_container"]} !important;
     font-weight: 700 !important;
 }}
 
@@ -755,8 +773,8 @@ ul[role="listbox"] li[aria-selected="true"] * {{
    MULTISELECT TAGS / CHIPS
    ══════════════════════════════════════════ */
 span[data-baseweb="tag"] {{
-    background-color: var(--primary-container) !important;
-    border: 1px solid var(--primary) !important;
+    background-color: {TOKENS["primary_container"]} !important;
+    border: 1px solid {TOKENS["primary"]} !important;
     border-radius: 6px !important;
     padding: 3px 8px !important;
     gap: 4px !important;
@@ -764,8 +782,8 @@ span[data-baseweb="tag"] {{
 
 span[data-baseweb="tag"] span,
 span[data-baseweb="tag"] div {{
-    color: var(--on-primary-container) !important;
-    -webkit-text-fill-color: var(--on-primary-container) !important;
+    color: {TOKENS["on_primary_container"]} !important;
+    -webkit-text-fill-color: {TOKENS["on_primary_container"]} !important;
     font-family: 'Inter', -apple-system, sans-serif !important;
     font-weight: 600 !important;
     font-size: 0.81rem !important;
@@ -773,47 +791,53 @@ span[data-baseweb="tag"] div {{
 
 span[data-baseweb="tag"] [role="presentation"] svg,
 span[data-baseweb="tag"] svg {{
-    fill: var(--on-primary-container) !important;
-    color: var(--on-primary-container) !important;
+    fill: {TOKENS["on_primary_container"]} !important;
+    color: {TOKENS["on_primary_container"]} !important;
     opacity: 0.8 !important;
 }}
 
 /* ═══════════════════════════════════════════════════
-   TEXT INPUT / NUMBER INPUT — Full Visibility Fix
-   Forces correct text + background on ALL Streamlit
-   input widgets regardless of BaseWeb inline styles
+   TEXT INPUT & NUMBER INPUT — Full High Contrast Fix
    ═══════════════════════════════════════════════════ */
 
-/* Outer wrapper */
-div[data-baseweb="input"] {{
-    background-color: {TOKENS["surface_container_low"]} !important;
+/* Input wrapper containers */
+div[data-testid="stNumberInput"],
+div[data-testid="stNumberInputContainer"],
+div[data-testid="stNumberInputField"],
+div[data-testid="stTextInput"],
+div[data-testid="stTextInputRootElement"],
+div[data-baseweb="input"],
+div[data-baseweb="base-input"],
+div[data-baseweb="input"] > div {{
+    background-color: {TOKENS["surface_container_lowest"]} !important;
+    background: {TOKENS["surface_container_lowest"]} !important;
+    border-color: {TOKENS["outline_variant"]} !important;
     border-radius: 8px !important;
 }}
 
-/* Inner border wrapper */
 div[data-baseweb="input"] > div {{
-    background-color: {TOKENS["surface_container_low"]} !important;
     border: 1.5px solid {TOKENS["outline_variant"]} !important;
-    border-radius: 8px !important;
     min-height: 2.6rem !important;
 }}
 
-/* The actual <input> element — highest specificity fix */
+div[data-baseweb="input"] > div:focus-within {{
+    border-color: {TOKENS["primary"]} !important;
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18) !important;
+}}
+
+/* Actual <input> elements */
 div[data-baseweb="input"] input,
-div[data-baseweb="input"] input:focus,
-div[data-baseweb="input"] input:active,
-div[data-baseweb="input"] input:hover,
+div[data-baseweb="base-input"] input,
 [data-testid="stNumberInput"] input,
-[data-testid="stNumberInput"] input:focus,
+[data-testid="stTextInput"] input,
 .stNumberInput input,
 .stTextInput input,
-input[class*="st-"],
 input[type="number"],
 input[type="text"] {{
     color: {TOKENS["on_surface"]} !important;
     -webkit-text-fill-color: {TOKENS["on_surface"]} !important;
-    background-color: transparent !important;
-    background: transparent !important;
+    background-color: {TOKENS["surface_container_lowest"]} !important;
+    background: {TOKENS["surface_container_lowest"]} !important;
     font-family: 'Inter', -apple-system, sans-serif !important;
     font-weight: 600 !important;
     font-size: 0.92rem !important;
@@ -821,7 +845,7 @@ input[type="text"] {{
     opacity: 1 !important;
 }}
 
-/* Placeholder text */
+/* Input placeholder text */
 div[data-baseweb="input"] input::placeholder,
 [data-testid="stNumberInput"] input::placeholder,
 input[type="number"]::placeholder,
@@ -833,20 +857,42 @@ input[type="text"]::placeholder {{
 
 /* Number input +/- step buttons */
 [data-testid="stNumberInput"] button,
-[data-testid="stNumberInput"] button svg,
-[data-testid="stNumberInput"] button svg path {{
+[data-testid="stNumberInputContainer"] button {{
+    background-color: {TOKENS["surface_container_low"]} !important;
+    background: {TOKENS["surface_container_low"]} !important;
+    border: 1px solid {TOKENS["outline_variant"]} !important;
     color: {TOKENS["on_surface"]} !important;
-    fill: {TOKENS["on_surface"]} !important;
+    -webkit-text-fill-color: {TOKENS["on_surface"]} !important;
+}}
+
+[data-testid="stNumberInput"] button:hover,
+[data-testid="stNumberInputContainer"] button:hover {{
     background-color: {TOKENS["surface_container_high"]} !important;
 }}
 
-/* Search / text input general */
+[data-testid="stNumberInput"] button svg,
+[data-testid="stNumberInput"] button svg path,
+[data-testid="stNumberInputContainer"] button svg,
+[data-testid="stNumberInputContainer"] button svg path {{
+    color: {TOKENS["on_surface"]} !important;
+    fill: {TOKENS["on_surface"]} !important;
+}}
+
+/* Universal input / textarea */
 input, textarea {{
     color: {TOKENS["on_surface"]} !important;
     -webkit-text-fill-color: {TOKENS["on_surface"]} !important;
-    background-color: transparent !important;
     font-weight: 600 !important;
     font-size: 0.92rem !important;
+}}
+
+/* Dataframe styling container */
+[data-testid="stDataFrame"],
+div[data-testid="stDataFrame"] > div {{
+    border: 1px solid {TOKENS["outline_variant"]} !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    background-color: {TOKENS["surface_container_lowest"]} !important;
 }}
 
 /* Radio button options */
